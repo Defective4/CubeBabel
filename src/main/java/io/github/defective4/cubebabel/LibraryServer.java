@@ -32,7 +32,7 @@ public class LibraryServer {
         MinecraftServer.getGlobalEventHandler().addListener(PlayerLoadedEvent.class, event -> {
             Player p = event.getPlayer();
             p.setGameMode(GameMode.CREATIVE);
-            p.teleport(new Pos(8, 42, 8));
+            p.teleport(new Pos(0, 42, 0));
         });
     }
 

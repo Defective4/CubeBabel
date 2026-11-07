@@ -41,7 +41,11 @@ public class LibraryServer {
         });
     }
 
-    public BlockVec getRoomLocation(BlockVec pos) {
+    public void start(String host, int port) {
+        server.start(host, port);
+    }
+
+    public static BlockVec getRoomIndex(BlockVec pos) {
         int z = pos.blockZ() + 7;
         boolean b = false;
         if ((pos.blockX() + 7) / 11 % 2 == 1) {
@@ -72,7 +76,10 @@ public class LibraryServer {
         return new BlockVec(roomX, roomZ);
     }
 
-    public void start(String host, int port) {
-        server.start(host, port);
+    public static BlockVec getRoomLocation(int x, int z) {
+        int roomX = x * 11;
+        int roomZ = z * 14 + roomX % 2 * 7;
+
+        return new BlockVec(roomX, roomZ);
     }
 }

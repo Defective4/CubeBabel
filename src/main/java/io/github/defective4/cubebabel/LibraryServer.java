@@ -9,6 +9,7 @@ import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
 import net.minestom.server.event.player.PlayerLoadedEvent;
 import net.minestom.server.instance.InstanceContainer;
 import net.minestom.server.instance.LightingChunk;
+import net.minestom.server.instance.WorldBorder;
 import net.minestom.server.registry.RegistryKey;
 import net.minestom.server.world.DimensionType;
 
@@ -25,6 +26,7 @@ public class LibraryServer {
         libraryInstance = MinecraftServer.getInstanceManager().createInstanceContainer(libraryDimension);
         libraryInstance.setChunkSupplier(LightingChunk::new);
         libraryInstance.setGenerator(new LibraryGenerator());
+        libraryInstance.setWorldBorder(new WorldBorder(20e7 + 17, 10e7, 10e7, 0, 0, (int) 20e7 + 17));
 
         MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerConfigurationEvent.class,
                 e -> e.setSpawningInstance(libraryInstance));

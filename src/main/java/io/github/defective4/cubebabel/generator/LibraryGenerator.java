@@ -24,7 +24,9 @@ public class LibraryGenerator implements Generator {
                 start = start.add(i * 16, 0, j * 16);
                 int chunkX = start.chunkX();
                 int chunkZ = start.chunkZ();
-                if (chunkX < 0 || chunkZ < 0) return;
+                if (chunkX < 0 || chunkZ < 0) {
+                    continue;
+                }
 
                 int offsetX = Math.ceilDiv(start.blockX(), 11) * 11 % 16;
 
@@ -60,32 +62,36 @@ public class LibraryGenerator implements Generator {
                 // north-east
                 vec = new BlockVec(x + 3 + d, y, z - 5 + d);
                 blocks.put(vec, Block.OAK_PLANKS);
-                for (int i = 0; i < 2; i++)
+                for (int i = 0; i < 2; i++) {
                     for (int j = 0; j < 2; j++) {
                         blocks.put(vec.add(i, 0, -j), Block.OAK_PLANKS);
                     }
+                }
                 // north-west
                 vec = new BlockVec(x - 3 - d, y, z - 5 + d);
                 blocks.put(vec, Block.OAK_PLANKS);
-                for (int i = 0; i < 2; i++)
+                for (int i = 0; i < 2; i++) {
                     for (int j = 0; j < 2; j++) {
                         blocks.put(vec.add(-i, 0, -j), Block.OAK_PLANKS);
                     }
+                }
                 // south-east
                 vec = new BlockVec(x + 3 + d, y, z + 5 - d);
                 blocks.put(vec, Block.OAK_PLANKS);
-                for (int i = 0; i < 2; i++)
+                for (int i = 0; i < 2; i++) {
                     for (int j = 0; j < 2; j++) {
                         blocks.put(vec.add(i, 0, j), Block.OAK_PLANKS);
                     }
+                }
                 // south-west
                 vec = new BlockVec(x - 3 - d, y, z + 5 - d);
                 blocks.put(vec, Block.OAK_PLANKS);
-                for (int i = 0; i < 2; i++)
+                for (int i = 0; i < 2; i++) {
                     for (int j = 0; j < 2; j++) {
                         blocks.put(vec.add(-i, 0, j), Block.OAK_PLANKS);
                         blocks.put(vec, Block.OAK_PLANKS);
                     }
+                }
             }
         }
 

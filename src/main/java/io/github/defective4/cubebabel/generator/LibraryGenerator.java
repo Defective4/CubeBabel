@@ -44,6 +44,9 @@ public class LibraryGenerator implements Generator {
 
     private static void placeHexagon(int x, int z, GenerationUnit unit) {
         BlockVec start = unit.absoluteStart();
+        if (new BlockVec(x, z).sameChunk(start)) {
+            unit.modifier().setBlock(x, GROUND_LEVEL - 1, z, Block.DIAMOND_BLOCK);
+        }
 
         Map<BlockVec, Block> blocks = new HashMap<>();
         BlockVec vec;

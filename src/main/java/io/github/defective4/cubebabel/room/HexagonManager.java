@@ -39,7 +39,9 @@ public class HexagonManager {
         else if (offsetDeg == -LibraryGenerator.LOW_THRESHOLD)
             return Sides.NSE;
         else {
-            if ((offsetDeg < -LibraryGenerator.LOW_THRESHOLD && deg > -LibraryGenerator.HIGH_THRESHOLD) || (deg > LibraryGenerator.LOW_THRESHOLD && offsetDeg < LibraryGenerator.HIGH_THRESHOLD)) return Sides.NS;
+            if (offsetDeg < -LibraryGenerator.LOW_THRESHOLD && deg > -LibraryGenerator.HIGH_THRESHOLD
+                    || deg > LibraryGenerator.LOW_THRESHOLD && offsetDeg < LibraryGenerator.HIGH_THRESHOLD)
+                return Sides.NS;
             if (deg < -LibraryGenerator.HIGH_THRESHOLD) return Sides.NESW;
             if (offsetDeg > LibraryGenerator.HIGH_THRESHOLD) return Sides.NWSE;
             if (offsetDeg > -LibraryGenerator.LOW_THRESHOLD && offsetDeg < LibraryGenerator.LOW_THRESHOLD)

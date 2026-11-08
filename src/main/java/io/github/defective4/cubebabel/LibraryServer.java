@@ -2,6 +2,7 @@ package io.github.defective4.cubebabel;
 
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import io.github.defective4.cubebabel.room.HexagonManager;
+import io.github.defective4.cubebabel.schematic.SchematicManager;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.builder.Command;
 import net.minestom.server.coordinate.BlockVec;
@@ -22,6 +23,7 @@ public class LibraryServer {
     public static final BlockVec MAX_ROOM = new BlockVec(2727270, 2142855);
     private final RegistryKey<DimensionType> libraryDimension;
     private final InstanceContainer libraryInstance;
+    private final SchematicManager schematicManager = new SchematicManager();
     private final MinecraftServer server;
 
     static {
@@ -36,7 +38,7 @@ public class LibraryServer {
 
         libraryInstance = MinecraftServer.getInstanceManager().createInstanceContainer(libraryDimension);
         libraryInstance.setChunkSupplier(LightingChunk::new);
-        libraryInstance.setGenerator(new LibraryGenerator());
+        libraryInstance.setGenerator(new LibraryGenerator(this));
 
         MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerConfigurationEvent.class,
                 e -> e.setSpawningInstance(libraryInstance));
@@ -69,6 +71,10 @@ public class LibraryServer {
                 });
             }
         });
+    }
+
+    public SchematicManager getSchematicManager() {
+        return schematicManager;
     }
 
     public void start(String host, int port) {

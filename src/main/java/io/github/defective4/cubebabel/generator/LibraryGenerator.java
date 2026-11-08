@@ -3,11 +3,14 @@ package io.github.defective4.cubebabel.generator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
+import io.github.defective4.cubebabel.LibraryServer;
 import io.github.defective4.cubebabel.block.Facing;
 import io.github.defective4.cubebabel.room.HexagonManager;
 import io.github.defective4.cubebabel.room.Side;
 import io.github.defective4.cubebabel.room.Sides;
+import io.github.defective4.cubebabel.schematic.Schematic;
 import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.generator.GenerationUnit;
@@ -18,11 +21,15 @@ public class LibraryGenerator implements Generator {
     public static final double HIGH_THRESHOLD = 122.47119229084849;
     public static final double LOW_THRESHOLD = 57.52880770915151;
     private static final int GROUND_LEVEL = 41;
+    private final LibraryServer server;
+
+    public LibraryGenerator(LibraryServer server) {
+        this.server = server;
+    }
 
     @Override
     public void generate(GenerationUnit unit) {
-        unit.modifier().fillHeight(0, GROUND_LEVEL - 1, Block.DIRT);
-        unit.modifier().fillHeight(40, GROUND_LEVEL, Block.GRASS_BLOCK);
+        unit.modifier().fillHeight(40, GROUND_LEVEL, Block.OAK_PLANKS);
 
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
@@ -48,15 +55,7 @@ public class LibraryGenerator implements Generator {
         }
     }
 
-    private static Block createBookshelf(Facing facing) {
-        Block shelf = Block.CHISELED_BOOKSHELF.withProperty("facing", facing.name().toLowerCase());
-        for (int i = 0; i < 6; i++) {
-            shelf = shelf.withProperty("slot_%s_occupied".formatted(i), "true");
-        }
-        return shelf;
-    }
-
-    private static void placeHexagon(int x, int z, GenerationUnit unit) {
+    private void placeHexagon(int x, int z, GenerationUnit unit) {
         BlockVec start = unit.absoluteStart();
         BlockVec index = HexagonManager.getRoomIndex(new BlockVec(x, z));
         int ix = index.blockX();
@@ -137,12 +136,31 @@ public class LibraryGenerator implements Generator {
             }
         }
 
+        Optional<Schematic> schemOpt = server.getSchematicManager().getSchematic(ix, iz);
+        if (schemOpt.isPresent()) {
+            Schematic schematic = schemOpt.get();
+            BlockVec hexStart = new BlockVec(x - schematic.getX() / 2, 40, z - schematic.getZ() / 2).sub(0, 0, 0);
+            for (Entry<BlockVec, Block> entry : schematic.getBlocks().entrySet()) {
+                if (!entry.getValue().air()) {
+                    blocks.put(hexStart.add(entry.getKey()), entry.getValue());
+                }
+            }
+        }
+
         for (Entry<BlockVec, Block> entry : blocks.entrySet()) {
             BlockVec vector = entry.getKey();
             if (vector.sameChunk(start)) {
                 unit.modifier().setBlock(vector, entry.getValue());
             }
         }
+    }
+
+    private static Block createBookshelf(Facing facing) {
+        Block shelf = Block.CHISELED_BOOKSHELF.withProperty("facing", facing.name().toLowerCase());
+        for (int i = 0; i < 6; i++) {
+            shelf = shelf.withProperty("slot_%s_occupied".formatted(i), "true");
+        }
+        return shelf;
     }
 
 }

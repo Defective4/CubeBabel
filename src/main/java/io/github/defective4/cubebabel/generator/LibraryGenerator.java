@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Random;
 
 import io.github.defective4.cubebabel.LibraryServer;
 import io.github.defective4.cubebabel.block.Facing;
@@ -11,6 +12,7 @@ import io.github.defective4.cubebabel.room.HexagonManager;
 import io.github.defective4.cubebabel.room.Side;
 import io.github.defective4.cubebabel.room.Sides;
 import io.github.defective4.cubebabel.schematic.Schematic;
+import io.github.defective4.cubebabel.schematic.SchematicDefinition;
 import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.generator.GenerationUnit;
@@ -29,7 +31,7 @@ public class LibraryGenerator implements Generator {
 
     @Override
     public void generate(GenerationUnit unit) {
-        unit.modifier().fillHeight(40, GROUND_LEVEL, Block.OAK_PLANKS);
+        unit.modifier().fillHeight(GROUND_LEVEL - 1, GROUND_LEVEL, Block.OAK_PLANKS);
 
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
@@ -136,13 +138,28 @@ public class LibraryGenerator implements Generator {
             }
         }
 
-        Optional<Schematic> schemOpt = server.getSchematicManager().getSchematic(ix, iz);
+        Optional<SchematicDefinition> schemOpt = server.getSchematicManager().getSchematic(ix, iz);
         if (schemOpt.isPresent()) {
-            Schematic schematic = schemOpt.get();
-            BlockVec hexStart = new BlockVec(x - schematic.getX() / 2, 40, z - schematic.getZ() / 2).sub(0, 0, 0);
+            Random rand = server.getSchematicManager().getRandomForRoom(ix, iz);
+            SchematicDefinition def = schemOpt.get();
+            Schematic schematic = def.schematic();
+            BlockVec hexStart = new BlockVec(x - schematic.getX() / 2, GROUND_LEVEL - 1 - schematic.getY() / 2,
+                    z - schematic.getZ() / 2).sub(0, 0, 0);
             for (Entry<BlockVec, Block> entry : schematic.getBlocks().entrySet()) {
+                if (blocks.containsKey(entry.getKey())) {
+                    continue;
+                }
                 if (!entry.getValue().air()) {
-                    blocks.put(hexStart.add(entry.getKey()), entry.getValue());
+                    Block block = entry.getValue();
+                    if (def.ignoredBlockTypes().contains(block.key().asString())) {
+                        continue;
+                    }
+                    if (block.key().equals(Block.REDSTONE_WIRE.key())) {
+                        block = block.defaultState();
+                    }
+                    if (def.chanceIntact() < 100 && rand.nextInt(100) < def.chanceIntact()) {
+                        blocks.put(hexStart.add(entry.getKey()), block);
+                    }
                 }
             }
         }

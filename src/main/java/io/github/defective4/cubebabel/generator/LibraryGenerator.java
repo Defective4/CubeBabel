@@ -146,19 +146,22 @@ public class LibraryGenerator implements Generator {
             BlockVec hexStart = new BlockVec(x - schematic.getX() / 2, GROUND_LEVEL - 1 - schematic.getY() / 2,
                     z - schematic.getZ() / 2).sub(0, 0, 0);
             for (Entry<BlockVec, Block> entry : schematic.getBlocks().entrySet()) {
-                if (blocks.containsKey(entry.getKey())) {
+                BlockVec pos = hexStart.add(entry.getKey());
+                if (blocks.containsKey(pos)) {
                     continue;
                 }
                 if (!entry.getValue().air()) {
                     Block block = entry.getValue();
-                    if (def.ignoredBlockTypes().contains(block.key().asString())) {
+                    String blkKey = block.key().asString();
+                    if (def.ignoredBlockTypes().contains(blkKey)) {
                         continue;
                     }
                     if (block.key().equals(Block.REDSTONE_WIRE.key())) {
                         block = block.defaultState();
                     }
-                    if (def.chanceIntact() < 100 && rand.nextInt(100) < def.chanceIntact()) {
-                        blocks.put(hexStart.add(entry.getKey()), block);
+                    if (def.chanceIntact() == 100 || def.nonRandomTypes().contains(blkKey)
+                            || rand.nextInt(100) < def.chanceIntact()) {
+                        blocks.put(pos, block);
                     }
                 }
             }

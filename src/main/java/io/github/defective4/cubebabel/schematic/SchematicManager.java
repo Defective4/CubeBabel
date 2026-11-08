@@ -7,7 +7,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
+
+import net.minestom.server.instance.block.Block;
 
 public class SchematicManager {
 
@@ -17,9 +20,13 @@ public class SchematicManager {
 
     public SchematicManager() {
         schematics = Collections.unmodifiableList(Arrays.asList(//
-                new SchematicDefinition(loadSchematic("void1")), //
+                new SchematicDefinition(loadSchematic("void1"), 100, Set.of()), //
                 new SchematicDefinition(loadSchematic("blood"), 10), //
-                new SchematicDefinition(loadSchematic("enchanting"), 50) //
+                new SchematicDefinition(loadSchematic("enchanting"), 50), //
+                new SchematicDefinition(loadSchematic("gates1"), 90), //
+                new SchematicDefinition(loadSchematic("deco2"), 10), //
+                new SchematicDefinition(loadSchematic("floor1"), 100, Set.of()), //
+                new SchematicDefinition(loadSchematic("floor2"), 10, Set.of(), Set.of(getBlockKey(Block.GRASS_BLOCK))) //
         ));
     }
 
@@ -31,7 +38,7 @@ public class SchematicManager {
     }
 
     public Optional<SchematicDefinition> getSchematic(int roomX, int roomZ) {
-        return Optional.ofNullable(schematics.get(2));
+        return Optional.empty();
     }
 
     private Schematic loadSchematic(String name) {
@@ -41,5 +48,9 @@ public class SchematicManager {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private static String getBlockKey(Block block) {
+        return block.key().toString();
     }
 }

@@ -20,9 +20,9 @@ import net.minestom.server.instance.generator.Generator;
 
 public class LibraryGenerator implements Generator {
 
+    public static final int GROUND_LEVEL = 41;
     public static final double HIGH_THRESHOLD = 122.47119229084849;
     public static final double LOW_THRESHOLD = 57.52880770915151;
-    private static final int GROUND_LEVEL = 41;
     private final LibraryServer server;
 
     public LibraryGenerator(LibraryServer server) {

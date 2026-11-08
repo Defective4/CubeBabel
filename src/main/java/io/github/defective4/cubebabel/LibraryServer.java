@@ -5,18 +5,17 @@ import java.util.Arrays;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.BlockVec;
-import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
 import net.minestom.server.event.player.PlayerLoadedEvent;
 import net.minestom.server.instance.InstanceContainer;
 import net.minestom.server.instance.LightingChunk;
-import net.minestom.server.instance.WorldBorder;
 import net.minestom.server.registry.RegistryKey;
 import net.minestom.server.world.DimensionType;
 
 public class LibraryServer {
+    private static final BlockVec MAX_ROOM = new BlockVec(2727270, 2142855);
     private final RegistryKey<DimensionType> libraryDimension;
     private final InstanceContainer libraryInstance;
     private final MinecraftServer server;
@@ -29,7 +28,6 @@ public class LibraryServer {
         libraryInstance = MinecraftServer.getInstanceManager().createInstanceContainer(libraryDimension);
         libraryInstance.setChunkSupplier(LightingChunk::new);
         libraryInstance.setGenerator(new LibraryGenerator());
-        libraryInstance.setWorldBorder(new WorldBorder(20e7 + 17, 10e7, 10e7, 0, 0, (int) 20e7 + 17));
 
         MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerConfigurationEvent.class,
                 e -> e.setSpawningInstance(libraryInstance));
@@ -37,7 +35,8 @@ public class LibraryServer {
         MinecraftServer.getGlobalEventHandler().addListener(PlayerLoadedEvent.class, event -> {
             Player p = event.getPlayer();
             p.setGameMode(GameMode.CREATIVE);
-            p.teleport(new Pos(0, 42, 0));
+            BlockVec vec = new BlockVec(MAX_ROOM.blockX() / 2, MAX_ROOM.blockZ() / 2);
+            p.teleport(getRoomLocation(vec.blockX(), vec.blockZ()).withY(41).asPos());
         });
     }
 

@@ -4,13 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import io.github.defective4.cubebabel.LibraryServer;
+import io.github.defective4.cubebabel.block.Facing;
 import io.github.defective4.cubebabel.room.HexagonManager;
 import io.github.defective4.cubebabel.room.Side;
 import io.github.defective4.cubebabel.room.Sides;
-import net.kyori.adventure.nbt.CompoundBinaryTag;
-import net.kyori.adventure.nbt.ListBinaryTag;
-import net.kyori.adventure.nbt.StringBinaryTag;
 import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.generator.GenerationUnit;
@@ -51,6 +48,14 @@ public class LibraryGenerator implements Generator {
         }
     }
 
+    private static Block createBookshelf(Facing facing) {
+        Block shelf = Block.CHISELED_BOOKSHELF.withProperty("facing", facing.name().toLowerCase());
+        for (int i = 0; i < 6; i++) {
+            shelf = shelf.withProperty("slot_%s_occupied".formatted(i), "true");
+        }
+        return shelf;
+    }
+
     private static void placeHexagon(int x, int z, GenerationUnit unit) {
         BlockVec start = unit.absoluteStart();
         BlockVec index = HexagonManager.getRoomIndex(new BlockVec(x, z));
@@ -58,46 +63,34 @@ public class LibraryGenerator implements Generator {
         int iz = index.blockZ();
         Sides entrances = HexagonManager.calculateRoomEntrances(ix, iz);
 
-        if (new BlockVec(x, z).sameChunk(start)) {
-            Block sign = Block.OAK_SIGN;
-
-            sign = sign.withNbt(CompoundBinaryTag.builder().put("front_text", CompoundBinaryTag.builder().build()
-                    .putString("color", "black")
-                    .put("messages", ListBinaryTag.builder().add(StringBinaryTag.stringBinaryTag(""))
-                            .add(StringBinaryTag.stringBinaryTag("%s %s".formatted(
-                                    ix - LibraryServer.CENTER_ROOM.blockX(), iz - LibraryServer.CENTER_ROOM.blockZ())))
-                            .add(StringBinaryTag
-                                    .stringBinaryTag("%s".formatted(entrances.first() + "|" + entrances.second())))
-                            .add(StringBinaryTag.stringBinaryTag("")).build()))
-                    .build());
-
-            unit.modifier().setBlock(x, GROUND_LEVEL, z, sign);
-        }
-
         Map<BlockVec, Block> blocks = new HashMap<>();
         BlockVec vec;
 
-        for (int v = 0; v < 1; v++) {
+        for (int v = 0; v < 5; v++) {
             int y = GROUND_LEVEL + v;
             for (int h = -2; h <= 2; h++) {
                 if (!entrances.has(Side.N)) {
                     vec = new BlockVec(x + h, y, z - 6);
-                    blocks.put(vec, Block.OAK_PLANKS);
+                    blocks.put(vec, createBookshelf(Facing.SOUTH));
                 }
                 if (!entrances.has(Side.S)) {
                     vec = new BlockVec(x + h, y, z + 6);
-                    blocks.put(vec, Block.OAK_PLANKS);
+                    blocks.put(vec, createBookshelf(Facing.NORTH));
                     blocks.put(vec.add(0, 0, 1), Block.OAK_PLANKS);
                 }
             }
 
             for (int d = 0; d <= 5; d++) {
                 // north-east
+                boolean shelf = d < 5;
                 if (!entrances.has(Side.NE)) {
                     vec = new BlockVec(x + 3 + d, y, z - 5 + d);
-                    blocks.put(vec, Block.OAK_PLANKS);
+                    blocks.put(vec, shelf ? createBookshelf(d < 3 ? Facing.SOUTH : Facing.WEST) : Block.OAK_PLANKS);
                     for (int i = 0; i < 2; i++) {
                         for (int j = 0; j < 2; j++) {
+                            if (i == j) {
+                                continue;
+                            }
                             blocks.put(vec.add(i, 0, -j), Block.OAK_PLANKS);
                         }
                     }
@@ -105,9 +98,12 @@ public class LibraryGenerator implements Generator {
                 // north-west
                 if (!entrances.has(Side.NW)) {
                     vec = new BlockVec(x - 3 - d, y, z - 5 + d);
-                    blocks.put(vec, Block.OAK_PLANKS);
+                    blocks.put(vec, shelf ? createBookshelf(d < 3 ? Facing.SOUTH : Facing.EAST) : Block.OAK_PLANKS);
                     for (int i = 0; i < 2; i++) {
                         for (int j = 0; j < 2; j++) {
+                            if (i == j) {
+                                continue;
+                            }
                             blocks.put(vec.add(-i, 0, -j), Block.OAK_PLANKS);
                         }
                     }
@@ -115,9 +111,12 @@ public class LibraryGenerator implements Generator {
                 // south-east
                 if (!entrances.has(Side.SE)) {
                     vec = new BlockVec(x + 3 + d, y, z + 5 - d);
-                    blocks.put(vec, Block.OAK_PLANKS);
+                    blocks.put(vec, shelf ? createBookshelf(d < 3 ? Facing.NORTH : Facing.WEST) : Block.OAK_PLANKS);
                     for (int i = 0; i < 2; i++) {
                         for (int j = 0; j < 2; j++) {
+                            if (i == j) {
+                                continue;
+                            }
                             blocks.put(vec.add(i, 0, j), Block.OAK_PLANKS);
                         }
                     }
@@ -125,11 +124,13 @@ public class LibraryGenerator implements Generator {
                 // south-west
                 if (!entrances.has(Side.SW)) {
                     vec = new BlockVec(x - 3 - d, y, z + 5 - d);
-                    blocks.put(vec, Block.OAK_PLANKS);
+                    blocks.put(vec, shelf ? createBookshelf(d < 3 ? Facing.NORTH : Facing.EAST) : Block.OAK_PLANKS);
                     for (int i = 0; i < 2; i++) {
                         for (int j = 0; j < 2; j++) {
+                            if (i == j) {
+                                continue;
+                            }
                             blocks.put(vec.add(-i, 0, j), Block.OAK_PLANKS);
-                            blocks.put(vec, Block.OAK_PLANKS);
                         }
                     }
                 }

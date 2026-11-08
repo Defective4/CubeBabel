@@ -2,13 +2,49 @@ package io.github.defective4.cubebabel.room;
 
 import java.util.Arrays;
 
+import io.github.defective4.cubebabel.LibraryServer;
+import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import net.minestom.server.coordinate.BlockVec;
 
 public class HexagonManager {
     private HexagonManager() {
     }
 
-    public static Sides calculateRoomEntrances(int x, int z) {
+    public static Sides calculateRoomEntrances(int absX, int absZ) {
+        int rx = absX - LibraryServer.CENTER_ROOM.blockX();
+        int rz = absZ - LibraryServer.CENTER_ROOM.blockZ();
+        if (rx == 0) {
+            if (rz == 0) return Sides.NS;
+            if (rz == 1)
+                return Sides.NNE;
+            else if (rz == -1)
+                return Sides.SSW;
+            else
+                return rz < 0 ? Sides.SESW : Sides.NENW;
+        }
+
+        BlockVec centerRoomLocation = getRoomLocation(absX, absZ).sub(LibraryServer.CENTER_ROOM_LOCATION.blockX(), 0,
+                LibraryServer.CENTER_ROOM_LOCATION.blockZ());
+        BlockVec offsetRoomLocation = getRoomLocation(absX, absZ + (rx > 0 ? 1 : -1))
+                .sub(LibraryServer.CENTER_ROOM_LOCATION.blockX(), 0, LibraryServer.CENTER_ROOM_LOCATION.blockZ());
+
+        double deg = Math.toDegrees(Math.atan2(centerRoomLocation.blockX(), centerRoomLocation.blockZ()));
+        if (deg == -LibraryGenerator.HIGH_THRESHOLD)
+            return Sides.SNE;
+        else if (deg == LibraryGenerator.LOW_THRESHOLD) return Sides.NSW;
+
+        double offsetDeg = Math.toDegrees(Math.atan2(offsetRoomLocation.blockX(), offsetRoomLocation.blockZ()));
+        if (offsetDeg == LibraryGenerator.HIGH_THRESHOLD)
+            return Sides.SNW;
+        else if (offsetDeg == -LibraryGenerator.LOW_THRESHOLD)
+            return Sides.NSE;
+        else {
+            if ((offsetDeg < -LibraryGenerator.LOW_THRESHOLD && deg > -LibraryGenerator.HIGH_THRESHOLD) || (deg > LibraryGenerator.LOW_THRESHOLD && offsetDeg < LibraryGenerator.HIGH_THRESHOLD)) return Sides.NS;
+            if (deg < -LibraryGenerator.HIGH_THRESHOLD) return Sides.NESW;
+            if (offsetDeg > LibraryGenerator.HIGH_THRESHOLD) return Sides.NWSE;
+            if (offsetDeg > -LibraryGenerator.LOW_THRESHOLD && offsetDeg < LibraryGenerator.LOW_THRESHOLD)
+                return rx > 0 ? Sides.NESW : Sides.NWSE;
+        }
 
         return new Sides();
     }

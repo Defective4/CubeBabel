@@ -18,6 +18,8 @@ import net.minestom.server.instance.generator.Generator;
 
 public class LibraryGenerator implements Generator {
 
+    public static final double HIGH_THRESHOLD = 122.47119229084849;
+    public static final double LOW_THRESHOLD = 57.52880770915151;
     private static final int GROUND_LEVEL = 41;
 
     @Override
@@ -52,8 +54,9 @@ public class LibraryGenerator implements Generator {
     private static void placeHexagon(int x, int z, GenerationUnit unit) {
         BlockVec start = unit.absoluteStart();
         BlockVec index = HexagonManager.getRoomIndex(new BlockVec(x, z));
-        int ix = index.blockX() - LibraryServer.MAX_ROOM.blockX() / 2;
-        int iz = index.blockZ() - LibraryServer.MAX_ROOM.blockZ() / 2;
+        int ix = index.blockX();
+        int iz = index.blockZ();
+        Sides entrances = HexagonManager.calculateRoomEntrances(ix, iz);
 
         if (new BlockVec(x, z).sameChunk(start)) {
             Block sign = Block.OAK_SIGN;
@@ -61,8 +64,11 @@ public class LibraryGenerator implements Generator {
             sign = sign.withNbt(CompoundBinaryTag.builder().put("front_text", CompoundBinaryTag.builder().build()
                     .putString("color", "black")
                     .put("messages", ListBinaryTag.builder().add(StringBinaryTag.stringBinaryTag(""))
-                            .add(StringBinaryTag.stringBinaryTag("%s %s".formatted(ix, iz)))
-                            .add(StringBinaryTag.stringBinaryTag("")).add(StringBinaryTag.stringBinaryTag("")).build()))
+                            .add(StringBinaryTag.stringBinaryTag("%s %s".formatted(
+                                    ix - LibraryServer.CENTER_ROOM.blockX(), iz - LibraryServer.CENTER_ROOM.blockZ())))
+                            .add(StringBinaryTag
+                                    .stringBinaryTag("%s".formatted(entrances.first() + "|" + entrances.second())))
+                            .add(StringBinaryTag.stringBinaryTag("")).build()))
                     .build());
 
             unit.modifier().setBlock(x, GROUND_LEVEL, z, sign);
@@ -70,8 +76,6 @@ public class LibraryGenerator implements Generator {
 
         Map<BlockVec, Block> blocks = new HashMap<>();
         BlockVec vec;
-
-        Sides entrances = HexagonManager.calculateRoomEntrances(ix, iz);
 
         for (int v = 0; v < 1; v++) {
             int y = GROUND_LEVEL + v;

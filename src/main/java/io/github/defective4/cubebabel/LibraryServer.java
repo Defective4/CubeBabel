@@ -43,18 +43,18 @@ public class LibraryServer {
     public static final BlockVec CENTER_ROOM_LOCATION;
     public static final BlockVec MAX_ROOM = new BlockVec(2727270, 2142855);
     private final BabelCatalogue catalogue;
+    private BigInteger dimension = BigInteger.ZERO; // TODO proper dimension managements
     private final BabelLibrary library;
     private final RegistryKey<DimensionType> libraryDimension;
     private final InstanceContainer libraryInstance;
     private final SchematicManager schematicManager = new SchematicManager();
+
     private final MinecraftServer server;
 
     static {
         CENTER_ROOM = new BlockVec(MAX_ROOM.blockX() / 2, MAX_ROOM.blockZ() / 2);
         CENTER_ROOM_LOCATION = HexagonManager.getRoomLocation(CENTER_ROOM.blockX(), CENTER_ROOM.blockZ());
     }
-
-    private BigInteger dimension = BigInteger.ZERO;
 
     public LibraryServer(BabelLibrary library) {
         server = MinecraftServer.init();
@@ -104,6 +104,10 @@ public class LibraryServer {
                     dimension = location.room().divide(square);
                     BigInteger room = location.room().mod(square);
 
+                    System.out.println(location.wall());
+                    System.out.println(location.shelf());
+                    System.out.println(location.book());
+
                     int z = room.divide(maxW).intValueExact();
                     int x = room.mod(maxW).intValueExact();
 
@@ -125,7 +129,7 @@ public class LibraryServer {
                         List<Component> pages = new ArrayList<>();
                         String content = book.getContent();
                         for (int i = 0; i < 100; i++) {
-                            int start = library.getCharactersPerPage() * i + 1;
+                            int start = library.getCharactersPerPage() * (i + 1);
                             int end = start + library.getCharactersPerPage();
                             pages.add(Component.text(content.substring(start, end)));
                         }
@@ -150,6 +154,7 @@ public class LibraryServer {
             String title = babelBook.getPage(0).substring(0, 15).trim();
             String author = babelBook.getPage(0).substring(15, 15 + 15).trim();
 
+            // TODO put room IDs in a database
             CompoundBinaryTag babelTag = CompoundBinaryTag.builder().putString("room", location.base32Room())
                     .putInt("wall", location.wall()).putInt("shelf", location.shelf()).putInt("book", location.book())
                     .build();
@@ -226,9 +231,9 @@ public class LibraryServer {
 
         BigInteger maxW = BigInteger.valueOf(MAX_ROOM.blockX());
         BigInteger square = maxW.multiply(BigInteger.valueOf(MAX_ROOM.blockZ()));
-        
-        BigInteger room = BigInteger.valueOf(index.blockX())
-                .add(BigInteger.valueOf(index.blockZ()).multiply(maxW)).add(square.multiply(dimension));
+
+        BigInteger room = BigInteger.valueOf(index.blockX()).add(BigInteger.valueOf(index.blockZ()).multiply(maxW))
+                .add(square.multiply(dimension));
         BookLocation loc = new BookLocation(room, wall, shelf, book + vIndex * 6);
         return loc;
     }

@@ -2,6 +2,7 @@ package io.github.defective4.cubebabel;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
@@ -53,6 +54,8 @@ public class LibraryServer {
         CENTER_ROOM_LOCATION = HexagonManager.getRoomLocation(CENTER_ROOM.blockX(), CENTER_ROOM.blockZ());
     }
 
+    private BigInteger dimension = BigInteger.ZERO;
+
     public LibraryServer(BabelLibrary library) {
         server = MinecraftServer.init();
         libraryDimension = MinecraftServer.getDimensionTypeRegistry().register("minecraft:library",
@@ -85,6 +88,26 @@ public class LibraryServer {
 
                     Player player = (Player) sender;
                     player.teleport(new Pos(x, y, z));
+                });
+            }
+        });
+
+        MinecraftServer.getCommandManager().register(new Command("find") {
+            {
+                setDefaultExecutor((sender, ctx) -> {
+                    String[] args = ctx.getInput().split(" ");
+                    String msg = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+                    Book book = catalogue.findBook(msg);
+                    BookLocation location = book.getBookLocation();
+                    BigInteger maxW = BigInteger.valueOf(MAX_ROOM.blockX());
+                    BigInteger square = maxW.multiply(BigInteger.valueOf(MAX_ROOM.blockZ()));
+                    dimension = location.room().divide(square);
+                    BigInteger room = location.room().mod(square);
+
+                    int z = room.divide(maxW).intValueExact();
+                    int x = room.mod(maxW).intValueExact();
+
+                    ((Player) sender).teleport(HexagonManager.getRoomLocation(x, z).asPos().withY(64));
                 });
             }
         });
@@ -147,7 +170,7 @@ public class LibraryServer {
         server.start(host, port);
     }
 
-    private static BookLocation getBookCoordinates(BlockVec pos, Point cursor, BlockFace clickedFace) {
+    private BookLocation getBookCoordinates(BlockVec pos, Point cursor, BlockFace clickedFace) {
         BlockVec index = HexagonManager.getRoomIndex(pos);
         BlockVec center = HexagonManager.getRoomLocation(index.blockX(), index.blockZ());
         BlockVec diff = pos.sub(center);
@@ -201,10 +224,13 @@ public class LibraryServer {
             wall--;
         }
 
+        BigInteger maxW = BigInteger.valueOf(MAX_ROOM.blockX());
+        BigInteger square = maxW.multiply(BigInteger.valueOf(MAX_ROOM.blockZ()));
+        
         BigInteger room = BigInteger.valueOf(index.blockX())
-                .add(BigInteger.valueOf(index.blockZ()).multiply(BigInteger.valueOf(MAX_ROOM.blockX())));
-
-        return new BookLocation(room, wall, shelf, book + vIndex * 6);
+                .add(BigInteger.valueOf(index.blockZ()).multiply(maxW)).add(square.multiply(dimension));
+        BookLocation loc = new BookLocation(room, wall, shelf, book + vIndex * 6);
+        return loc;
     }
 
     private static Block setShelfBook(Block shelf, int slot, boolean has) {

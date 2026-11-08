@@ -3,3 +3,6 @@
 /.classpath
 /.settings
 Main.java
+/c.bin
+/i.bin
+/max.bin

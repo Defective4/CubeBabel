@@ -4,6 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import io.github.defective4.cubebabel.LibraryServer;
+import io.github.defective4.cubebabel.room.HexagonManager;
+import io.github.defective4.cubebabel.room.Side;
+import io.github.defective4.cubebabel.room.Sides;
+import net.kyori.adventure.nbt.CompoundBinaryTag;
+import net.kyori.adventure.nbt.ListBinaryTag;
+import net.kyori.adventure.nbt.StringBinaryTag;
 import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.generator.GenerationUnit;
@@ -44,55 +51,82 @@ public class LibraryGenerator implements Generator {
 
     private static void placeHexagon(int x, int z, GenerationUnit unit) {
         BlockVec start = unit.absoluteStart();
+        BlockVec index = HexagonManager.getRoomIndex(new BlockVec(x, z));
+        int ix = index.blockX() - LibraryServer.MAX_ROOM.blockX() / 2;
+        int iz = index.blockZ() - LibraryServer.MAX_ROOM.blockZ() / 2;
+
         if (new BlockVec(x, z).sameChunk(start)) {
-            unit.modifier().setBlock(x, GROUND_LEVEL - 1, z, Block.DIAMOND_BLOCK);
+            Block sign = Block.OAK_SIGN;
+
+            sign = sign.withNbt(CompoundBinaryTag.builder().put("front_text", CompoundBinaryTag.builder().build()
+                    .putString("color", "black")
+                    .put("messages", ListBinaryTag.builder().add(StringBinaryTag.stringBinaryTag(""))
+                            .add(StringBinaryTag.stringBinaryTag("%s %s".formatted(ix, iz)))
+                            .add(StringBinaryTag.stringBinaryTag("")).add(StringBinaryTag.stringBinaryTag("")).build()))
+                    .build());
+
+            unit.modifier().setBlock(x, GROUND_LEVEL, z, sign);
         }
 
         Map<BlockVec, Block> blocks = new HashMap<>();
         BlockVec vec;
 
+        Sides entrances = HexagonManager.calculateRoomEntrances(ix, iz);
+
         for (int v = 0; v < 1; v++) {
             int y = GROUND_LEVEL + v;
             for (int h = -2; h <= 2; h++) {
-                vec = new BlockVec(x + h, y, z - 6);
-                blocks.put(vec, Block.OAK_PLANKS);
-                vec = new BlockVec(x + h, y, z + 6);
-                blocks.put(vec, Block.OAK_PLANKS);
-                blocks.put(vec.add(0, 0, 1), Block.OAK_PLANKS);
+                if (!entrances.has(Side.N)) {
+                    vec = new BlockVec(x + h, y, z - 6);
+                    blocks.put(vec, Block.OAK_PLANKS);
+                }
+                if (!entrances.has(Side.S)) {
+                    vec = new BlockVec(x + h, y, z + 6);
+                    blocks.put(vec, Block.OAK_PLANKS);
+                    blocks.put(vec.add(0, 0, 1), Block.OAK_PLANKS);
+                }
             }
 
             for (int d = 0; d <= 5; d++) {
                 // north-east
-                vec = new BlockVec(x + 3 + d, y, z - 5 + d);
-                blocks.put(vec, Block.OAK_PLANKS);
-                for (int i = 0; i < 2; i++) {
-                    for (int j = 0; j < 2; j++) {
-                        blocks.put(vec.add(i, 0, -j), Block.OAK_PLANKS);
+                if (!entrances.has(Side.NE)) {
+                    vec = new BlockVec(x + 3 + d, y, z - 5 + d);
+                    blocks.put(vec, Block.OAK_PLANKS);
+                    for (int i = 0; i < 2; i++) {
+                        for (int j = 0; j < 2; j++) {
+                            blocks.put(vec.add(i, 0, -j), Block.OAK_PLANKS);
+                        }
                     }
                 }
                 // north-west
-                vec = new BlockVec(x - 3 - d, y, z - 5 + d);
-                blocks.put(vec, Block.OAK_PLANKS);
-                for (int i = 0; i < 2; i++) {
-                    for (int j = 0; j < 2; j++) {
-                        blocks.put(vec.add(-i, 0, -j), Block.OAK_PLANKS);
+                if (!entrances.has(Side.NW)) {
+                    vec = new BlockVec(x - 3 - d, y, z - 5 + d);
+                    blocks.put(vec, Block.OAK_PLANKS);
+                    for (int i = 0; i < 2; i++) {
+                        for (int j = 0; j < 2; j++) {
+                            blocks.put(vec.add(-i, 0, -j), Block.OAK_PLANKS);
+                        }
                     }
                 }
                 // south-east
-                vec = new BlockVec(x + 3 + d, y, z + 5 - d);
-                blocks.put(vec, Block.OAK_PLANKS);
-                for (int i = 0; i < 2; i++) {
-                    for (int j = 0; j < 2; j++) {
-                        blocks.put(vec.add(i, 0, j), Block.OAK_PLANKS);
+                if (!entrances.has(Side.SE)) {
+                    vec = new BlockVec(x + 3 + d, y, z + 5 - d);
+                    blocks.put(vec, Block.OAK_PLANKS);
+                    for (int i = 0; i < 2; i++) {
+                        for (int j = 0; j < 2; j++) {
+                            blocks.put(vec.add(i, 0, j), Block.OAK_PLANKS);
+                        }
                     }
                 }
                 // south-west
-                vec = new BlockVec(x - 3 - d, y, z + 5 - d);
-                blocks.put(vec, Block.OAK_PLANKS);
-                for (int i = 0; i < 2; i++) {
-                    for (int j = 0; j < 2; j++) {
-                        blocks.put(vec.add(-i, 0, j), Block.OAK_PLANKS);
-                        blocks.put(vec, Block.OAK_PLANKS);
+                if (!entrances.has(Side.SW)) {
+                    vec = new BlockVec(x - 3 - d, y, z + 5 - d);
+                    blocks.put(vec, Block.OAK_PLANKS);
+                    for (int i = 0; i < 2; i++) {
+                        for (int j = 0; j < 2; j++) {
+                            blocks.put(vec.add(-i, 0, j), Block.OAK_PLANKS);
+                            blocks.put(vec, Block.OAK_PLANKS);
+                        }
                     }
                 }
             }

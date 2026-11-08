@@ -11,10 +11,6 @@ public record Sides(Side first, Side second) {
     public static final Sides SESW = new Sides(Side.SE, Side.SW);
     public static final Sides NNE = new Sides(Side.N, Side.NE);
     public static final Sides SSW = new Sides(Side.S, Side.SW);
-    public static final Sides NES = new Sides(Side.NE, Side.S);
-    public static final Sides SWN = new Sides(Side.SW, Side.N);
-    public static final Sides SENW = new Sides(Side.SE, Side.NW);
-    public static final Sides SWNE = new Sides(Side.SW, Side.NE);
     public static final Sides SNE = new Sides(Side.S, Side.NE);
     public static final Sides SNW = new Sides(Side.S, Side.NW);
     public static final Sides NSW = new Sides(Side.N, Side.SW);

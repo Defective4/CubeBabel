@@ -13,7 +13,6 @@ import io.github.defective4.jbabel.BabelCatalogue;
 import io.github.defective4.jbabel.BabelLibrary;
 import io.github.defective4.jbabel.Book;
 import io.github.defective4.jbabel.BookLocation;
-import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.builder.Command;
@@ -33,7 +32,6 @@ import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.block.BlockFace;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
-import net.minestom.server.item.component.CustomData;
 import net.minestom.server.item.component.WrittenBookContent;
 import net.minestom.server.registry.RegistryKey;
 import net.minestom.server.world.DimensionType;
@@ -119,22 +117,14 @@ public class LibraryServer {
         MinecraftServer.getGlobalEventHandler().addListener(PlayerUseItemEvent.class, e -> {
             ItemStack item = e.getItemStack();
             if (item != null && item.material() == Material.WRITTEN_BOOK) {
-                CustomData custom = item.get(DataComponents.CUSTOM_DATA);
-                if (custom != null) {
-                    CompoundBinaryTag data = custom.nbt();
-                    if (data != null) {
-                        BookLocation location = new BookLocation(data.getString("room"), data.getInt("wall"),
-                                data.getInt("shelf"), data.getInt("book"));
-                        Book book = catalogue.getBookAt(location);
-                        List<Component> pages = new ArrayList<>();
-                        String content = book.getContent();
-                        for (int i = 0; i < 100; i++) {
-                            int start = library.getCharactersPerPage() * (i + 1);
-                            int end = start + library.getCharactersPerPage();
-                            pages.add(Component.text(content.substring(start, end)));
-                        }
-                        e.getPlayer().openBook(net.kyori.adventure.inventory.Book.book(pages));
-                    }
+                WrittenBookContent content = item.get(DataComponents.WRITTEN_BOOK_CONTENT);
+                if (content != null) {
+                    net.kyori.adventure.inventory.Book book = net.kyori.adventure.inventory.Book.builder()
+                            .pages(content.pages().stream().map(ft -> ft.text()).toList())
+                            .title(Component.text(content.title().text())).author(Component.text(content.author()))
+                            .build();
+
+                    e.getPlayer().openBook(book);
                 }
             }
         });
@@ -151,18 +141,22 @@ public class LibraryServer {
 
             Book babelBook = catalogue.getBookAt(location);
 
-            String title = babelBook.getPage(0).substring(0, 15).trim();
-            String author = babelBook.getPage(0).substring(15, 15 + 15).trim();
+            String content = babelBook.getContent();
 
-            // TODO put room IDs in a database
-            CompoundBinaryTag babelTag = CompoundBinaryTag.builder().putString("room", location.base32Room())
-                    .putInt("wall", location.wall()).putInt("shelf", location.shelf()).putInt("book", location.book())
-                    .build();
+            String title = content.substring(0, 15).trim();
+            String author = content.substring(15, 15 + 15).trim();
 
-            CustomData data = new CustomData(babelTag);
+            List<Component> components = new ArrayList<>();
+
+            for (int i = 0; i < 100; i++) {
+                int start = library.getCharactersPerPage() * (i + 1);
+                int end = start + library.getCharactersPerPage();
+                components.add(Component.text(content.substring(start, end)));
+            }
+
             ItemStack book = ItemStack.builder(Material.WRITTEN_BOOK)
-                    .set(DataComponents.WRITTEN_BOOK_CONTENT, new WrittenBookContent(title, author, List.of()))
-                    .set(DataComponents.CUSTOM_DATA, data).build();
+                    .set(DataComponents.WRITTEN_BOOK_CONTENT, new WrittenBookContent(title, author, components))
+                    .build();
             e.getPlayer().getInventory().addItemStack(book);
         });
     }

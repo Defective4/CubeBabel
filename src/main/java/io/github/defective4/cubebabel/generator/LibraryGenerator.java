@@ -36,10 +36,6 @@ public class LibraryGenerator implements Generator {
         int chunkX = start.chunkX();
         int chunkZ = start.chunkZ();
 
-        if (chunkX == -2 && (chunkZ == -2 || chunkZ == -1)) {
-            placeHub(unit);
-        }
-
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
                 start = unit.absoluteStart();
@@ -178,17 +174,6 @@ public class LibraryGenerator implements Generator {
             BlockVec vector = entry.getKey();
             if (vector.sameChunk(start)) {
                 unit.modifier().setBlock(vector, entry.getValue());
-            }
-        }
-    }
-
-    private void placeHub(GenerationUnit unit) {
-        Schematic hub = server.getSchematicManager().getHub();
-        BlockVec start = new BlockVec(-32, GROUND_LEVEL, -32);
-        for (Entry<BlockVec, Block> entry : hub.getBlocks().entrySet()) {
-            BlockVec location = start.add(entry.getKey());
-            if (location.sameChunk(unit.absoluteStart())) {
-                unit.modifier().setBlock(location, entry.getValue());
             }
         }
     }

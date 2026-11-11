@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import io.github.defective4.cubebabel.generator.HubGenerator;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import io.github.defective4.cubebabel.room.HexagonManager;
 import io.github.defective4.cubebabel.room.Sides;
@@ -23,7 +24,9 @@ import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
+import net.minestom.server.event.player.PlayerBlockBreakEvent;
 import net.minestom.server.event.player.PlayerBlockInteractEvent;
+import net.minestom.server.event.player.PlayerBlockPlaceEvent;
 import net.minestom.server.event.player.PlayerLoadedEvent;
 import net.minestom.server.event.player.PlayerUseItemEvent;
 import net.minestom.server.instance.InstanceContainer;
@@ -42,9 +45,11 @@ public class LibraryServer {
     public static final BlockVec MAX_ROOM = new BlockVec(2727270, 2142855);
     private final BabelCatalogue catalogue;
     private BigInteger dimension = BigInteger.ZERO; // TODO proper dimension managements
+    private final InstanceContainer hubInstance;
     private final BabelLibrary library;
     private final RegistryKey<DimensionType> libraryDimension;
     private final InstanceContainer libraryInstance;
+
     private final SchematicManager schematicManager = new SchematicManager();
 
     private final MinecraftServer server;
@@ -60,35 +65,26 @@ public class LibraryServer {
                 DimensionType.builder().ambientLight(1.0f).build());
 
         libraryInstance = MinecraftServer.getInstanceManager().createInstanceContainer(libraryDimension);
+        hubInstance = MinecraftServer.getInstanceManager()
+                .createInstanceContainer(MinecraftServer.getDimensionTypeRegistry().register("minecraft:hub",
+                        DimensionType.builder().ambientLight(1.0f).build()));
         this.library = library;
         catalogue = new BabelCatalogue.Builder(library).create();
 
         libraryInstance.setChunkSupplier(LightingChunk::new);
         libraryInstance.setGenerator(new LibraryGenerator(this));
 
+        hubInstance.setChunkSupplier(LightingChunk::new);
+        hubInstance.setGenerator(new HubGenerator(schematicManager.getHub()));
+
         MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerConfigurationEvent.class,
-                e -> e.setSpawningInstance(libraryInstance));
+                e -> e.setSpawningInstance(hubInstance));
 
         MinecraftServer.getGlobalEventHandler().addListener(PlayerLoadedEvent.class, event -> {
             Player p = event.getPlayer();
             p.setGameMode(GameMode.SURVIVAL);
-//            BlockVec vec = new BlockVec(MAX_ROOM.blockX() / 2, MAX_ROOM.blockZ() / 2);
-            Pos vec = new Pos(-25.5, 43, -28.5);
+            Pos vec = new Pos(6.5, 67, 3.5);
             p.teleport(vec.asPos());
-        });
-
-        MinecraftServer.getCommandManager().register(new Command("tp") {
-            {
-                setDefaultExecutor((sender, ctx) -> {
-                    String[] args = ctx.getInput().split(" ");
-                    double x = Double.parseDouble(args[2]);
-                    double y = Double.parseDouble(args[3]);
-                    double z = Double.parseDouble(args[4]);
-
-                    Player player = (Player) sender;
-                    player.teleport(new Pos(x, y, z));
-                });
-            }
         });
 
         MinecraftServer.getCommandManager().register(new Command("find") {
@@ -130,7 +126,16 @@ public class LibraryServer {
             }
         });
 
+        MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockBreakEvent.class, e -> {
+            e.setCancelled(true);
+        });
+
+        MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockPlaceEvent.class, e -> {
+            e.setCancelled(true);
+        });
+
         MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockInteractEvent.class, e -> {
+            e.setCancelled(true);
             if (e.getPlayer().isSneaking()) return;
             BlockVec pos = e.getBlockPosition();
             if (!e.getBlock().key().equals(Block.CHISELED_BOOKSHELF.key())) return;

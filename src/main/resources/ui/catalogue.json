@@ -1,0 +1,28 @@
+{
+    "catalogue": [
+        [
+            "Welcome to the Library of Babel catalogue\n\n",
+            "> ",
+            {
+                "text": "[Find a book]",
+                "page": 2
+            },
+            "\n\n> ",
+            {
+                "text": "[Random book]",
+                "command": "random"
+            }
+        ],
+        [
+            "Find a book\n\n",
+            "> ",
+            "[By title]",
+            "\n\n> ",
+            "[By author]",
+            "\n\n> ",
+            "[By content]",
+            "\n\n> ",
+            "[All of the above]"
+        ]
+    ]
+}

@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import io.github.defective4.cubebabel.book.BookManager;
+import io.github.defective4.cubebabel.book.HubCatalogue;
+import io.github.defective4.cubebabel.command.RandomBookCommand;
 import io.github.defective4.cubebabel.generator.HubGenerator;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import io.github.defective4.cubebabel.player.PlayerManager;
@@ -15,8 +17,10 @@ import io.github.defective4.jbabel.BabelLibrary;
 import io.github.defective4.jbabel.Book;
 import io.github.defective4.jbabel.BookLocation;
 import net.minestom.server.MinecraftServer;
+import net.minestom.server.command.CommandManager;
 import net.minestom.server.command.builder.Command;
 import net.minestom.server.coordinate.BlockVec;
+import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
 import net.minestom.server.event.player.PlayerBlockBreakEvent;
@@ -40,11 +44,12 @@ public class LibraryServer {
     private final BookManager bookManager;
     private final BabelCatalogue catalogue;
     private BigInteger dimension = BigInteger.ZERO; // TODO proper dimension managements
+    private final HubCatalogue hubCatalogue;
     private final InstanceContainer hubInstance;
+
     private final BabelLibrary library;
 
     private final InstanceContainer libraryInstance;
-
     private final SchematicManager schematicManager = new SchematicManager();
     private final MinecraftServer server;
 
@@ -58,9 +63,11 @@ public class LibraryServer {
         server = MinecraftServer.init();
         libraryInstance = initInstance("babel:library", new LibraryGenerator(this));
         hubInstance = initInstance("babel:hub", new HubGenerator(schematicManager.getHub(), this));
-        catalogue = new BabelCatalogue.Builder(library).create();
+        catalogue = new BabelCatalogue.Builder(library).withRandomBookBits(1024 * 16).create();
         bookManager = new BookManager(this);
+        hubCatalogue = new HubCatalogue(this);
         initEvents();
+        initCommands();
     }
 
     public BabelCatalogue getCatalogue() {
@@ -80,23 +87,28 @@ public class LibraryServer {
         return library;
     }
 
+    public InstanceContainer getLibraryInstance() {
+        return libraryInstance;
+    }
+
     public SchematicManager getSchematicManager() {
         return schematicManager;
+    }
+
+    public void setDimension(BigInteger dimension) {
+        this.dimension = dimension;
     }
 
     public void start(String host, int port) {
         server.start(host, port);
     }
 
-    private void initEvents() {
-        MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerConfigurationEvent.class,
-                e -> e.setSpawningInstance(hubInstance));
+    private void initCommands() {
+        CommandManager mgr = MinecraftServer.getCommandManager();
 
-        MinecraftServer.getGlobalEventHandler().addListener(PlayerLoadedEvent.class, event -> {
-            PlayerManager.initPlayer(event);
-        });
+        mgr.register(new RandomBookCommand(this));
 
-        MinecraftServer.getCommandManager().register(new Command("find") {
+        mgr.register(new Command("find") {
             {
                 setDefaultExecutor((sender, ctx) -> {
                     String[] args = ctx.getInput().split(" ");
@@ -119,6 +131,18 @@ public class LibraryServer {
                 });
             }
         });
+    }
+
+    private void initEvents() {
+        MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerConfigurationEvent.class, e -> {
+            Pos vec = new Pos(6.5, 67, 3.5);
+            e.getPlayer().setRespawnPoint(vec);
+            e.setSpawningInstance(hubInstance);
+        });
+
+        MinecraftServer.getGlobalEventHandler().addListener(PlayerLoadedEvent.class, event -> {
+            PlayerManager.initPlayer(event);
+        });
 
         MinecraftServer.getGlobalEventHandler().addListener(PlayerUseItemEvent.class, e -> {
             ItemStack item = e.getItemStack();
@@ -135,7 +159,7 @@ public class LibraryServer {
             e.setCancelled(true);
         });
 
-        MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockInteractEvent.class, e -> {
+        libraryInstance.eventNode().addListener(PlayerBlockInteractEvent.class, e -> {
             e.setCancelled(true);
             if (e.getPlayer().isSneaking()) return;
             BlockVec pos = e.getBlockPosition();
@@ -147,6 +171,8 @@ public class LibraryServer {
                     e.getInstance());
             e.getPlayer().getInventory().addItemStack(book);
         });
+
+        hubCatalogue.initEvents();
     }
 
     private static InstanceContainer initInstance(String dimension, Generator generator) {

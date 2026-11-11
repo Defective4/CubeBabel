@@ -6,15 +6,19 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;
+import net.kyori.adventure.nbt.ListBinaryTag;
 import net.minestom.server.coordinate.BlockVec;
+import net.minestom.server.coordinate.Pos;
 import net.minestom.server.instance.block.Block;
 
 public class Schematic {
 
     private final Map<BlockVec, Block> blocks;
+    private final Map<Pos, EntityDefinition> entities;
     private final int x, y, z;
 
     public Schematic(InputStream in) throws IOException {
@@ -55,10 +59,43 @@ public class Schematic {
             index++;
         }
         this.blocks = Collections.unmodifiableMap(blockmap);
+
+        if (tag.contains("Entities")) {
+            Map<Pos, EntityDefinition> entities = new HashMap<>();
+            ListBinaryTag list = tag.getList("Entities");
+            for (BinaryTag entityBinTag : list) {
+                if (entityBinTag instanceof CompoundBinaryTag entityTag) {
+                    String id = entityTag.getString("Id");
+                    ListBinaryTag posList = entityTag.getList("Pos");
+                    double x = posList.getDouble(0);
+                    double y = posList.getDouble(1);
+                    double z = posList.getDouble(2);
+
+                    Pos rotation;
+
+                    if (entityTag.contains("Data")) {
+                        CompoundBinaryTag data = entityTag.getCompound("Data");
+                        ListBinaryTag rot = data.getList("Rotation");
+                        rotation = new Pos(0, 0, 0, rot.getFloat(0), rot.getFloat(1));
+                    } else {
+                        rotation = new Pos(0, 0, 0, 0, 0);
+                    }
+
+                    entities.put(new Pos(x, y, z), new EntityDefinition(id, rotation));
+                }
+            }
+            this.entities = Collections.unmodifiableMap(entities);
+        } else {
+            entities = Collections.emptyMap();
+        }
     }
 
     public Map<BlockVec, Block> getBlocks() {
         return blocks;
+    }
+
+    public Map<Pos, EntityDefinition> getEntities() {
+        return entities;
     }
 
     public int getX() {

@@ -2,8 +2,13 @@ package io.github.defective4.cubebabel.generator;
 
 import java.util.Map.Entry;
 
+import io.github.defective4.cubebabel.LibraryServer;
+import io.github.defective4.cubebabel.schematic.EntityDefinition;
 import io.github.defective4.cubebabel.schematic.Schematic;
 import net.minestom.server.coordinate.BlockVec;
+import net.minestom.server.coordinate.Pos;
+import net.minestom.server.entity.Entity;
+import net.minestom.server.entity.EntityType;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.generator.GenerationUnit;
 import net.minestom.server.instance.generator.Generator;
@@ -11,9 +16,11 @@ import net.minestom.server.instance.generator.Generator;
 public class HubGenerator implements Generator {
 
     private final Schematic hub;
+    private final LibraryServer server;
 
-    public HubGenerator(Schematic hub) {
+    public HubGenerator(Schematic hub, LibraryServer server) {
         this.hub = hub;
+        this.server = server;
     }
 
     @Override
@@ -32,6 +39,16 @@ public class HubGenerator implements Generator {
             BlockVec location = start.add(entry.getKey());
             if (location.sameChunk(unit.absoluteStart())) {
                 unit.modifier().setBlock(location, entry.getValue());
+            }
+        }
+
+        for (Entry<Pos, EntityDefinition> entry : hub.getEntities().entrySet()) {
+            EntityDefinition def = entry.getValue();
+            Pos location = start.asPos().add(entry.getKey()).withYaw(def.rotation().yaw())
+                    .withPitch(def.rotation().pitch());
+            if (location.sameChunk(unit.absoluteStart())) {
+                Entity entity = new Entity(EntityType.fromKey(def.id()));
+                entity.setInstance(server.getHubInstance(), location);
             }
         }
     }

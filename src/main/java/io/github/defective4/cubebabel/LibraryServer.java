@@ -57,7 +57,7 @@ public class LibraryServer {
         this.library = Objects.requireNonNull(library);
         server = MinecraftServer.init();
         libraryInstance = initInstance("babel:library", new LibraryGenerator(this));
-        hubInstance = initInstance("babel:hub", new HubGenerator(schematicManager.getHub()));
+        hubInstance = initInstance("babel:hub", new HubGenerator(schematicManager.getHub(), this));
         catalogue = new BabelCatalogue.Builder(library).create();
         bookManager = new BookManager(this);
         initEvents();
@@ -70,6 +70,10 @@ public class LibraryServer {
     // TODO
     public BigInteger getDimension() {
         return dimension;
+    }
+
+    public InstanceContainer getHubInstance() {
+        return hubInstance;
     }
 
     public BabelLibrary getLibrary() {

@@ -28,7 +28,10 @@ public class SchematicOptimizerTool {
 
         CompoundBinaryTag schem = tag.getCompound("Schematic");
         schem = schem.remove("Offset").remove("DataVersion").remove("Version").remove("Metadata");
-        tag = CompoundBinaryTag.builder().put("Schematic", schem.remove("Blocks").put("Blocks", schem.getCompound("Blocks").remove("BlockEntities"))).build();
+        tag = CompoundBinaryTag.builder()
+                .put("Schematic",
+                        schem.remove("Blocks").put("Blocks", schem.getCompound("Blocks").remove("BlockEntities")))
+                .build();
 
         try (OutputStream out = new GZIPOutputStream(new FileOutputStream(file))) {
             BinaryTagIO.writer().write(tag, out);

@@ -7,6 +7,7 @@ import java.util.Objects;
 import io.github.defective4.cubebabel.book.BookManager;
 import io.github.defective4.cubebabel.book.HubCatalogue;
 import io.github.defective4.cubebabel.command.RandomBookCommand;
+import io.github.defective4.cubebabel.command.SpawnCommand;
 import io.github.defective4.cubebabel.generator.HubGenerator;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import io.github.defective4.cubebabel.player.PlayerManager;
@@ -41,6 +42,7 @@ public class LibraryServer {
     public static final BlockVec CENTER_ROOM;
     public static final BlockVec CENTER_ROOM_LOCATION;
     public static final BlockVec MAX_ROOM = new BlockVec(2727270, 2142855);
+    public static final Pos SPAWN_POINT = new Pos(6.5, 67, 3.5);
     private final BookManager bookManager;
     private final BabelCatalogue catalogue;
     private BigInteger dimension = BigInteger.ZERO; // TODO proper dimension managements
@@ -107,6 +109,7 @@ public class LibraryServer {
         CommandManager mgr = MinecraftServer.getCommandManager();
 
         mgr.register(new RandomBookCommand(this));
+        mgr.register(new SpawnCommand(this));
 
         mgr.register(new Command("find") {
             {
@@ -135,7 +138,7 @@ public class LibraryServer {
 
     private void initEvents() {
         MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerConfigurationEvent.class, e -> {
-            Pos vec = new Pos(6.5, 67, 3.5);
+            Pos vec = SPAWN_POINT;
             e.getPlayer().setRespawnPoint(vec);
             e.setSpawningInstance(hubInstance);
         });

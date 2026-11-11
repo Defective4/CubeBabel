@@ -13,21 +13,26 @@ import java.util.zip.GZIPInputStream;
 import net.minestom.server.instance.block.Block;
 
 public class SchematicManager {
-
+    private final Schematic hub;
     private final Random rand = new Random();
-
     private final List<SchematicDefinition> schematics;
 
     public SchematicManager() {
         schematics = Collections.unmodifiableList(Arrays.asList(//
-                new SchematicDefinition(loadSchematic("void1"), 100, Set.of()), //
-                new SchematicDefinition(loadSchematic("blood"), 10), //
-                new SchematicDefinition(loadSchematic("enchanting"), 50), //
-                new SchematicDefinition(loadSchematic("gates1"), 90), //
-                new SchematicDefinition(loadSchematic("deco2"), 10), //
-                new SchematicDefinition(loadSchematic("floor1"), 100, Set.of()), //
-                new SchematicDefinition(loadSchematic("floor2"), 10, Set.of(), Set.of(getBlockKey(Block.GRASS_BLOCK))) //
+                new SchematicDefinition(loadSchematic("room/void1"), 100, Set.of()), //
+                new SchematicDefinition(loadSchematic("room/blood"), 10), //
+                new SchematicDefinition(loadSchematic("room/enchanting"), 50), //
+                new SchematicDefinition(loadSchematic("room/gates1"), 90), //
+                new SchematicDefinition(loadSchematic("room/deco2"), 10), //
+                new SchematicDefinition(loadSchematic("room/floor1"), 100, Set.of()), //
+                new SchematicDefinition(loadSchematic("room/floor2"), 10, Set.of(),
+                        Set.of(getBlockKey(Block.GRASS_BLOCK))) //
         ));
+        hub = loadSchematic("fixed/hub");
+    }
+
+    public Schematic getHub() {
+        return hub;
     }
 
     public Random getRandomForRoom(int roomX, int roomZ) {
@@ -37,7 +42,7 @@ public class SchematicManager {
         }
     }
 
-    public Optional<SchematicDefinition> getSchematic(int roomX, int roomZ) {
+    public Optional<SchematicDefinition> getRoomSchematic(int roomX, int roomZ) {
         return Optional.empty();
     }
 

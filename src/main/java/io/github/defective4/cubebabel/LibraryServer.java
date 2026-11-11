@@ -37,6 +37,7 @@ import net.minestom.server.instance.generator.Generator;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
 import net.minestom.server.world.DimensionType;
+import net.minestom.server.world.DimensionType.Skybox;
 
 public class LibraryServer {
     public static final BlockVec CENTER_ROOM;
@@ -179,8 +180,9 @@ public class LibraryServer {
     }
 
     private static InstanceContainer initInstance(String dimension, Generator generator) {
-        InstanceContainer instance = MinecraftServer.getInstanceManager().createInstanceContainer(MinecraftServer
-                .getDimensionTypeRegistry().register(dimension, DimensionType.builder().ambientLight(1.0f).build()));
+        InstanceContainer instance = MinecraftServer.getInstanceManager()
+                .createInstanceContainer(MinecraftServer.getDimensionTypeRegistry().register(dimension,
+                        DimensionType.builder().skybox(Skybox.END).ambientLight(1.0f).build()));
         instance.setChunkSupplier(LightingChunk::new);
         instance.setGenerator(generator);
         return instance;

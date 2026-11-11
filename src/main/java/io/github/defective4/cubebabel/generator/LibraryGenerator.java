@@ -32,13 +32,20 @@ public class LibraryGenerator implements Generator {
     @Override
     public void generate(GenerationUnit unit) {
         unit.modifier().fillHeight(GROUND_LEVEL - 1, GROUND_LEVEL, Block.OAK_PLANKS);
+        BlockVec start = unit.absoluteStart();
+        int chunkX = start.chunkX();
+        int chunkZ = start.chunkZ();
+
+        if (chunkX == -2 && (chunkZ == -2 || chunkZ == -1)) {
+            placeHub(unit);
+        }
 
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
-                BlockVec start = unit.absoluteStart();
+                start = unit.absoluteStart();
+                chunkX = start.chunkX();
+                chunkZ = start.chunkZ();
                 start = start.add(i * 16, 0, j * 16);
-                int chunkX = start.chunkX();
-                int chunkZ = start.chunkZ();
                 if (chunkX < 0 || chunkZ < 0) {
                     continue;
                 }
@@ -138,7 +145,7 @@ public class LibraryGenerator implements Generator {
             }
         }
 
-        Optional<SchematicDefinition> schemOpt = server.getSchematicManager().getSchematic(ix, iz);
+        Optional<SchematicDefinition> schemOpt = server.getSchematicManager().getRoomSchematic(ix, iz);
         if (schemOpt.isPresent()) {
             Random rand = server.getSchematicManager().getRandomForRoom(ix, iz);
             SchematicDefinition def = schemOpt.get();
@@ -171,6 +178,17 @@ public class LibraryGenerator implements Generator {
             BlockVec vector = entry.getKey();
             if (vector.sameChunk(start)) {
                 unit.modifier().setBlock(vector, entry.getValue());
+            }
+        }
+    }
+
+    private void placeHub(GenerationUnit unit) {
+        Schematic hub = server.getSchematicManager().getHub();
+        BlockVec start = new BlockVec(-32, GROUND_LEVEL, -32);
+        for (Entry<BlockVec, Block> entry : hub.getBlocks().entrySet()) {
+            BlockVec location = start.add(entry.getKey());
+            if (location.sameChunk(unit.absoluteStart())) {
+                unit.modifier().setBlock(location, entry.getValue());
             }
         }
     }

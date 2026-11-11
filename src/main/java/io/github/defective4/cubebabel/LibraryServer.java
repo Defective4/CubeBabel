@@ -72,8 +72,9 @@ public class LibraryServer {
         MinecraftServer.getGlobalEventHandler().addListener(PlayerLoadedEvent.class, event -> {
             Player p = event.getPlayer();
             p.setGameMode(GameMode.SURVIVAL);
-            BlockVec vec = new BlockVec(MAX_ROOM.blockX() / 2, MAX_ROOM.blockZ() / 2);
-            p.teleport(HexagonManager.getRoomLocation(vec.blockX(), vec.blockZ()).withY(64).asPos());
+//            BlockVec vec = new BlockVec(MAX_ROOM.blockX() / 2, MAX_ROOM.blockZ() / 2);
+            Pos vec = new Pos(-26.5, 43, -29.5);
+            p.teleport(vec.asPos());
         });
 
         MinecraftServer.getCommandManager().register(new Command("tp") {

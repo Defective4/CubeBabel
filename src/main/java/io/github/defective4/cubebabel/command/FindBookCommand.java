@@ -104,7 +104,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
         BookLocation location = book.getBookLocation();
         BigInteger maxW = BigInteger.valueOf(MAX_ROOM.blockX());
         BigInteger square = maxW.multiply(BigInteger.valueOf(MAX_ROOM.blockZ()));
-        server.setDimension(location.room().divide(square));
+        server.getPlayerStorage().setDimension(player, location.room().divide(square));
         BigInteger room = location.room().mod(square);
 
         int z = room.divide(maxW).intValueExact();

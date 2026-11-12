@@ -44,7 +44,7 @@ public class RandomBookCommand extends Command implements CommandExecutor {
         int z = room.divide(maxW).intValueExact();
         int x = room.mod(maxW).intValueExact();
 
-        server.setDimension(dimension);
+        server.getPlayerStorage().setDimension(player, dimension);
         Pos pos = HexagonManager.getRoomLocation(x, z).asPos().withY(42);
         if (player.getInstance() == server.getLibraryInstance()) {
             player.teleport(pos);

@@ -26,7 +26,6 @@ public class PlayerManager {
     private static final LegacyComponentSerializer SERIALIZER = LegacyComponentSerializer.legacySection();
 
     private final Map<Player, Consumer<String>> anvilCallbacks = new HashMap<>();
-
     private final Map<Player, Consumer<String>> chatCallbacks = new HashMap<>();
 
     public PlayerManager() {

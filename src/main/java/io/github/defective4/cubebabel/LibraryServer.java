@@ -1,6 +1,5 @@
 package io.github.defective4.cubebabel;
 
-import java.math.BigInteger;
 import java.util.Objects;
 
 import io.github.defective4.cubebabel.book.BookManager;
@@ -11,6 +10,7 @@ import io.github.defective4.cubebabel.command.SpawnCommand;
 import io.github.defective4.cubebabel.generator.HubGenerator;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import io.github.defective4.cubebabel.player.PlayerManager;
+import io.github.defective4.cubebabel.player.PlayerStorage;
 import io.github.defective4.cubebabel.room.HexagonManager;
 import io.github.defective4.cubebabel.schematic.SchematicManager;
 import io.github.defective4.jbabel.BabelCatalogue;
@@ -42,7 +42,6 @@ public class LibraryServer {
     public static final Pos SPAWN_POINT = new Pos(6.5, 67, 3.5);
     private final BookManager bookManager;
     private final BabelCatalogue catalogue;
-    private BigInteger dimension = BigInteger.ZERO; // TODO proper dimension managements
     private final HubCatalogue hubCatalogue;
     private final InstanceContainer hubInstance;
 
@@ -50,6 +49,7 @@ public class LibraryServer {
 
     private final InstanceContainer libraryInstance;
     private final PlayerManager playerManager;
+    private final PlayerStorage playerStorage = new PlayerStorage();
     private final SchematicManager schematicManager = new SchematicManager();
     private final MinecraftServer server;
 
@@ -75,11 +75,6 @@ public class LibraryServer {
         return catalogue;
     }
 
-    // TODO
-    public BigInteger getDimension() {
-        return dimension;
-    }
-
     public InstanceContainer getHubInstance() {
         return hubInstance;
     }
@@ -96,12 +91,12 @@ public class LibraryServer {
         return playerManager;
     }
 
-    public SchematicManager getSchematicManager() {
-        return schematicManager;
+    public PlayerStorage getPlayerStorage() {
+        return playerStorage;
     }
 
-    public void setDimension(BigInteger dimension) {
-        this.dimension = dimension;
+    public SchematicManager getSchematicManager() {
+        return schematicManager;
     }
 
     public void start(String host, int port) {
@@ -114,30 +109,6 @@ public class LibraryServer {
         mgr.register(new RandomBookCommand(this));
         mgr.register(new SpawnCommand(this));
         mgr.register(new FindBookCommand(this));
-
-//        mgr.register(new Command("find") {
-//            {
-//                setDefaultExecutor((sender, ctx) -> {
-//                    String[] args = ctx.getInput().split(" ");
-//                    String msg = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-//                    Book book = catalogue.findBook(msg);
-//                    BookLocation location = book.getBookLocation();
-//                    BigInteger maxW = BigInteger.valueOf(MAX_ROOM.blockX());
-//                    BigInteger square = maxW.multiply(BigInteger.valueOf(MAX_ROOM.blockZ()));
-//                    dimension = location.room().divide(square);
-//                    BigInteger room = location.room().mod(square);
-//
-//                    System.out.println(location.wall());
-//                    System.out.println(location.shelf());
-//                    System.out.println(location.book());
-//
-//                    int z = room.divide(maxW).intValueExact();
-//                    int x = room.mod(maxW).intValueExact();
-//
-//                    ((Player) sender).teleport(HexagonManager.getRoomLocation(x, z).asPos().withY(64));
-//                });
-//            }
-//        });
     }
 
     private void initEvents() {
@@ -175,7 +146,7 @@ public class LibraryServer {
             if (e.getBlockFace() != shelfFace) return;
 
             ItemStack book = bookManager.getBookAt(pos, e.getCursorPosition(), e.getBlockFace(), e.getBlock(),
-                    e.getInstance());
+                    e.getInstance(), playerStorage.getDimension(e.getPlayer()));
             e.getPlayer().getInventory().addItemStack(book);
         });
 

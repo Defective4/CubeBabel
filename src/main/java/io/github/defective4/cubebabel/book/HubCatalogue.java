@@ -19,6 +19,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.event.player.PlayerBlockInteractEvent;
 import net.minestom.server.event.player.PlayerEntityInteractEvent;
+import net.minestom.server.instance.InstanceContainer;
 import net.minestom.server.item.Material;
 
 public class HubCatalogue {
@@ -71,13 +72,14 @@ public class HubCatalogue {
     }
 
     public void initEvents() {
-        server.getHubInstance().eventNode().addListener(PlayerBlockInteractEvent.class, e -> {
+        InstanceContainer hubInstance = server.getHubInstance();
+        hubInstance.eventNode().addListener(PlayerBlockInteractEvent.class, e -> {
             e.setCancelled(true);
             if (e.getBlock().material() == Material.LECTERN) {
                 e.getPlayer().openBook(catalogue);
             }
         });
-        server.getHubInstance().eventNode().addListener(PlayerEntityInteractEvent.class, e -> {
+        hubInstance.eventNode().addListener(PlayerEntityInteractEvent.class, e -> {
             if (e.getTarget().getEntityType() == EntityType.VILLAGER) {
                 e.getPlayer().openBook(catalogue);
             }

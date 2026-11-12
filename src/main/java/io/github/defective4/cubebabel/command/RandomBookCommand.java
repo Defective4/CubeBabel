@@ -5,7 +5,7 @@ import static io.github.defective4.cubebabel.LibraryServer.*;
 import java.math.BigInteger;
 
 import io.github.defective4.cubebabel.LibraryServer;
-import io.github.defective4.cubebabel.room.HexagonManager;
+import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import io.github.defective4.jbabel.BabelCatalogue;
 import io.github.defective4.jbabel.Book;
 import io.github.defective4.jbabel.BookLocation;
@@ -45,7 +45,7 @@ public class RandomBookCommand extends Command implements CommandExecutor {
         int x = room.mod(maxW).intValueExact();
 
         server.getPlayerStorage().setDimension(player, dimension);
-        Pos pos = HexagonManager.getRoomLocation(x, z).asPos().withY(42);
+        Pos pos = LibraryGenerator.getRoomLocation(x, z).asPos().withY(42);
         if (player.getInstance() == server.getLibraryInstance()) {
             player.teleport(pos);
         } else {

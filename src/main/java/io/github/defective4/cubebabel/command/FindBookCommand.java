@@ -7,7 +7,7 @@ import java.util.Random;
 import java.util.function.Consumer;
 
 import io.github.defective4.cubebabel.LibraryServer;
-import io.github.defective4.cubebabel.room.HexagonManager;
+import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import io.github.defective4.jbabel.BabelCatalogue;
 import io.github.defective4.jbabel.BabelLibrary;
 import io.github.defective4.jbabel.Book;
@@ -110,7 +110,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
         int z = room.divide(maxW).intValueExact();
         int x = room.mod(maxW).intValueExact();
 
-        player.setInstance(server.getLibraryInstance(), HexagonManager.getRoomLocation(x, z).asPos().withY(42));
+        player.setInstance(server.getLibraryInstance(), LibraryGenerator.getRoomLocation(x, z).asPos().withY(42));
 
         player.sendMessage(Component.text(location.wall()));
         player.sendMessage(Component.text(location.shelf()));

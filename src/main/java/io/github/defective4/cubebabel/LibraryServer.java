@@ -9,10 +9,9 @@ import io.github.defective4.cubebabel.command.RandomBookCommand;
 import io.github.defective4.cubebabel.command.SpawnCommand;
 import io.github.defective4.cubebabel.generator.HubGenerator;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
-import io.github.defective4.cubebabel.player.PlayerManager;
-import io.github.defective4.cubebabel.player.PlayerStorage;
-import io.github.defective4.cubebabel.room.HexagonManager;
 import io.github.defective4.cubebabel.schematic.SchematicManager;
+import io.github.defective4.cubebabel.storage.PlayerStorage;
+import io.github.defective4.cubebabel.ui.UIManager;
 import io.github.defective4.jbabel.BabelCatalogue;
 import io.github.defective4.jbabel.BabelLibrary;
 import net.minestom.server.MinecraftServer;
@@ -48,14 +47,14 @@ public class LibraryServer {
     private final BabelLibrary library;
 
     private final InstanceContainer libraryInstance;
-    private final PlayerManager playerManager;
+    private final UIManager playerManager;
     private final PlayerStorage playerStorage = new PlayerStorage();
     private final SchematicManager schematicManager = new SchematicManager();
     private final MinecraftServer server;
 
     static {
         CENTER_ROOM = new BlockVec(MAX_ROOM.blockX() / 2, MAX_ROOM.blockZ() / 2);
-        CENTER_ROOM_LOCATION = HexagonManager.getRoomLocation(CENTER_ROOM.blockX(), CENTER_ROOM.blockZ());
+        CENTER_ROOM_LOCATION = LibraryGenerator.getRoomLocation(CENTER_ROOM.blockX(), CENTER_ROOM.blockZ());
     }
 
     public LibraryServer(BabelLibrary library) {
@@ -66,7 +65,7 @@ public class LibraryServer {
         catalogue = new BabelCatalogue.Builder(library).withRandomBookBits(1024 * 16).create();
         bookManager = new BookManager(this);
         hubCatalogue = new HubCatalogue(this);
-        playerManager = new PlayerManager();
+        playerManager = new UIManager();
         initEvents();
         initCommands();
     }
@@ -87,7 +86,7 @@ public class LibraryServer {
         return libraryInstance;
     }
 
-    public PlayerManager getPlayerManager() {
+    public UIManager getPlayerManager() {
         return playerManager;
     }
 
@@ -119,7 +118,7 @@ public class LibraryServer {
         });
 
         MinecraftServer.getGlobalEventHandler().addListener(PlayerLoadedEvent.class, event -> {
-            PlayerManager.initPlayer(event);
+            PlayerStorage.initPlayer(event);
         });
 
         MinecraftServer.getGlobalEventHandler().addListener(PlayerUseItemEvent.class, e -> {

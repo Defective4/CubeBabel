@@ -1,4 +1,4 @@
-package io.github.defective4.cubebabel.player;
+package io.github.defective4.cubebabel.ui;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,7 +8,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.component.DataComponents;
-import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.GlobalEventHandler;
 import net.minestom.server.event.inventory.InventoryCloseEvent;
@@ -16,19 +15,18 @@ import net.minestom.server.event.inventory.InventoryPreClickEvent;
 import net.minestom.server.event.player.PlayerAnvilInputEvent;
 import net.minestom.server.event.player.PlayerChatEvent;
 import net.minestom.server.event.player.PlayerDisconnectEvent;
-import net.minestom.server.event.player.PlayerLoadedEvent;
 import net.minestom.server.inventory.type.AnvilInventory;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
 
-public class PlayerManager {
+public class UIManager {
 
     private static final LegacyComponentSerializer SERIALIZER = LegacyComponentSerializer.legacySection();
 
     private final Map<Player, Consumer<String>> anvilCallbacks = new HashMap<>();
     private final Map<Player, Consumer<String>> chatCallbacks = new HashMap<>();
 
-    public PlayerManager() {
+    public UIManager() {
         GlobalEventHandler handler = MinecraftServer.getGlobalEventHandler();
         handler.addListener(PlayerAnvilInputEvent.class, e -> {
             if (e.getInventory() instanceof AnvilInventory anvil) {
@@ -86,11 +84,6 @@ public class PlayerManager {
         anvil.setItemStack(0, ItemStack.of(Material.NAME_TAG).withCustomName(Component.text(initial)));
         anvil.setRepairCost((short) 0);
         player.openInventory(anvil);
-    }
-
-    public static void initPlayer(PlayerLoadedEvent event) {
-        Player p = event.getPlayer();
-        p.setGameMode(GameMode.SURVIVAL);
     }
 
 }

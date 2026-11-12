@@ -6,7 +6,6 @@ import java.util.List;
 
 import io.github.defective4.cubebabel.LibraryServer;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
-import io.github.defective4.cubebabel.room.HexagonManager;
 import io.github.defective4.cubebabel.room.Sides;
 import io.github.defective4.jbabel.BabelLibrary;
 import io.github.defective4.jbabel.Book;
@@ -73,8 +72,8 @@ public class BookManager {
 
     private static BookLocation getBookCoordinates(BlockVec pos, Point cursor, BlockFace clickedFace,
             BigInteger dimension) {
-        BlockVec index = HexagonManager.getRoomIndex(pos);
-        BlockVec center = HexagonManager.getRoomLocation(index.blockX(), index.blockZ());
+        BlockVec index = LibraryGenerator.getRoomIndex(pos);
+        BlockVec center = LibraryGenerator.getRoomLocation(index.blockX(), index.blockZ());
         BlockVec diff = pos.sub(center);
 
         int vIndex = 0;
@@ -118,7 +117,7 @@ public class BookManager {
                 vIndex = 4 - vIndex;
             }
         }
-        Sides entrances = HexagonManager.calculateRoomEntrances(index.blockX(), index.blockZ());
+        Sides entrances = LibraryGenerator.calculateRoomEntrances(index.blockX(), index.blockZ());
         if (entrances.first() != null && wall >= entrances.first().getWallIndex()) {
             wall--;
         }

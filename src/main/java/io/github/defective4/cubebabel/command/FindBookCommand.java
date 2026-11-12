@@ -110,7 +110,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
         int z = room.divide(maxW).intValueExact();
         int x = room.mod(maxW).intValueExact();
 
-        player.setInstance(server.getLibraryInstance(), HexagonManager.getRoomLocation(x, z).asPos().withY(64));
+        player.setInstance(server.getLibraryInstance(), HexagonManager.getRoomLocation(x, z).asPos().withY(42));
 
         player.sendMessage(Component.text(location.wall()));
         player.sendMessage(Component.text(location.shelf()));

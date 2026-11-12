@@ -16,13 +16,25 @@
         [
             "Find a book\n\n",
             "> ",
-            "[By title]",
+            {
+                "text": "[By title]",
+                "command": "find TITLE"
+            },
             "\n\n> ",
-            "[By author]",
+            {
+                "text": "[By author]",
+                "command": "find AUTHOR"
+            },
             "\n\n> ",
-            "[By content]",
+            {
+                "text": "[By content]",
+                "command": "find CONTENT"
+            },
             "\n\n> ",
-            "[All of the above]"
+            {
+                "text": "[All of the above]",
+                "command": "find ALL"
+            }
         ]
     ]
 }

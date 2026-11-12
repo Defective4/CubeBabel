@@ -1,11 +1,11 @@
 package io.github.defective4.cubebabel;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Objects;
 
 import io.github.defective4.cubebabel.book.BookManager;
 import io.github.defective4.cubebabel.book.HubCatalogue;
+import io.github.defective4.cubebabel.command.FindBookCommand;
 import io.github.defective4.cubebabel.command.RandomBookCommand;
 import io.github.defective4.cubebabel.command.SpawnCommand;
 import io.github.defective4.cubebabel.generator.HubGenerator;
@@ -15,14 +15,10 @@ import io.github.defective4.cubebabel.room.HexagonManager;
 import io.github.defective4.cubebabel.schematic.SchematicManager;
 import io.github.defective4.jbabel.BabelCatalogue;
 import io.github.defective4.jbabel.BabelLibrary;
-import io.github.defective4.jbabel.Book;
-import io.github.defective4.jbabel.BookLocation;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.CommandManager;
-import net.minestom.server.command.builder.Command;
 import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.coordinate.Pos;
-import net.minestom.server.entity.Player;
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
 import net.minestom.server.event.player.PlayerBlockBreakEvent;
 import net.minestom.server.event.player.PlayerBlockInteractEvent;
@@ -53,6 +49,7 @@ public class LibraryServer {
     private final BabelLibrary library;
 
     private final InstanceContainer libraryInstance;
+    private final PlayerManager playerManager;
     private final SchematicManager schematicManager = new SchematicManager();
     private final MinecraftServer server;
 
@@ -69,6 +66,7 @@ public class LibraryServer {
         catalogue = new BabelCatalogue.Builder(library).withRandomBookBits(1024 * 16).create();
         bookManager = new BookManager(this);
         hubCatalogue = new HubCatalogue(this);
+        playerManager = new PlayerManager();
         initEvents();
         initCommands();
     }
@@ -94,6 +92,10 @@ public class LibraryServer {
         return libraryInstance;
     }
 
+    public PlayerManager getPlayerManager() {
+        return playerManager;
+    }
+
     public SchematicManager getSchematicManager() {
         return schematicManager;
     }
@@ -111,30 +113,31 @@ public class LibraryServer {
 
         mgr.register(new RandomBookCommand(this));
         mgr.register(new SpawnCommand(this));
+        mgr.register(new FindBookCommand(this));
 
-        mgr.register(new Command("find") {
-            {
-                setDefaultExecutor((sender, ctx) -> {
-                    String[] args = ctx.getInput().split(" ");
-                    String msg = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-                    Book book = catalogue.findBook(msg);
-                    BookLocation location = book.getBookLocation();
-                    BigInteger maxW = BigInteger.valueOf(MAX_ROOM.blockX());
-                    BigInteger square = maxW.multiply(BigInteger.valueOf(MAX_ROOM.blockZ()));
-                    dimension = location.room().divide(square);
-                    BigInteger room = location.room().mod(square);
-
-                    System.out.println(location.wall());
-                    System.out.println(location.shelf());
-                    System.out.println(location.book());
-
-                    int z = room.divide(maxW).intValueExact();
-                    int x = room.mod(maxW).intValueExact();
-
-                    ((Player) sender).teleport(HexagonManager.getRoomLocation(x, z).asPos().withY(64));
-                });
-            }
-        });
+//        mgr.register(new Command("find") {
+//            {
+//                setDefaultExecutor((sender, ctx) -> {
+//                    String[] args = ctx.getInput().split(" ");
+//                    String msg = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+//                    Book book = catalogue.findBook(msg);
+//                    BookLocation location = book.getBookLocation();
+//                    BigInteger maxW = BigInteger.valueOf(MAX_ROOM.blockX());
+//                    BigInteger square = maxW.multiply(BigInteger.valueOf(MAX_ROOM.blockZ()));
+//                    dimension = location.room().divide(square);
+//                    BigInteger room = location.room().mod(square);
+//
+//                    System.out.println(location.wall());
+//                    System.out.println(location.shelf());
+//                    System.out.println(location.book());
+//
+//                    int z = room.divide(maxW).intValueExact();
+//                    int x = room.mod(maxW).intValueExact();
+//
+//                    ((Player) sender).teleport(HexagonManager.getRoomLocation(x, z).asPos().withY(64));
+//                });
+//            }
+//        });
     }
 
     private void initEvents() {

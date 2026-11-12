@@ -23,16 +23,14 @@ import net.minestom.server.item.Material;
 import net.minestom.server.item.component.WrittenBookContent;
 
 public class BookManager {
+    private static final String BOOKSHELF_SLOT = "slot_%s_occupied";
     private final LibraryServer server;
 
     public BookManager(LibraryServer server) {
         this.server = server;
     }
 
-    public ItemStack getBookAt(BlockVec pos, Point cursor, BlockFace blockFace, Block block, Instance instance,
-            BigInteger dimension) {
-        BookLocation location = getBookCoordinates(pos, cursor, blockFace, dimension);
-        instance.setBlock(pos, setShelfBook(block, location.book() % 6, false));
+    public ItemStack getBookFrom(BookLocation location, Block block, Instance instance) {
 
         Book babelBook = server.getCatalogue().getBookAt(location);
         BabelLibrary library = server.getLibrary();
@@ -59,19 +57,7 @@ public class BookManager {
         return BlockFace.valueOf(block.getProperty("facing").toUpperCase());
     }
 
-    public static void openBook(Player player, ItemStack item) {
-        WrittenBookContent content = item.get(DataComponents.WRITTEN_BOOK_CONTENT);
-        if (content != null) {
-            net.kyori.adventure.inventory.Book book = net.kyori.adventure.inventory.Book.builder()
-                    .pages(content.pages().stream().map(ft -> ft.text()).toList())
-                    .title(Component.text(content.title().text())).author(Component.text(content.author())).build();
-
-            player.openBook(book);
-        }
-    }
-
-    private static BookLocation getBookCoordinates(BlockVec pos, Point cursor, BlockFace clickedFace,
-            BigInteger dimension) {
+    public static BookLocation getBookCoordinates(BlockVec pos, int bookIndex, BigInteger dimension) {
         BlockVec index = LibraryGenerator.getRoomIndex(pos);
         BlockVec center = LibraryGenerator.getRoomLocation(index.blockX(), index.blockZ());
         BlockVec diff = pos.sub(center);
@@ -79,17 +65,6 @@ public class BookManager {
         int vIndex = 0;
         int wall = 0;
         int shelf = pos.blockY() - LibraryGenerator.GROUND_LEVEL;
-        int book = -1;
-
-        double h = clickedFace == BlockFace.EAST || clickedFace == BlockFace.WEST ? cursor.z() : cursor.x();
-        if (clickedFace == BlockFace.NORTH || clickedFace == BlockFace.EAST) {
-            h = 1 - h;
-        }
-
-        book = (int) (h / (1d / 3d));
-        if (cursor.y() < 0.5) {
-            book += 3;
-        }
 
         if (Math.abs(diff.blockZ()) == 6) {
             if (Math.abs(diff.blockX()) <= 2) {
@@ -130,11 +105,41 @@ public class BookManager {
 
         BigInteger room = BigInteger.valueOf(index.blockX()).add(BigInteger.valueOf(index.blockZ()).multiply(maxW))
                 .add(square.multiply(dimension));
-        BookLocation loc = new BookLocation(room, wall, shelf, book + vIndex * 6);
+        BookLocation loc = new BookLocation(room, wall, shelf, bookIndex + vIndex * 6);
         return loc;
     }
 
-    private static Block setShelfBook(Block shelf, int slot, boolean has) {
-        return shelf.withProperty("slot_%s_occupied".formatted(slot), Boolean.toString(has));
+    public static int getShelfBookIndex(Point cursor, BlockFace clickedFace) {
+        int book;
+        double h = clickedFace == BlockFace.EAST || clickedFace == BlockFace.WEST ? cursor.z() : cursor.x();
+        if (clickedFace == BlockFace.NORTH || clickedFace == BlockFace.EAST) {
+            h = 1 - h;
+        }
+
+        book = (int) (h / (1d / 3d));
+        if (cursor.y() < 0.5) {
+            book += 3;
+        }
+        return book;
+    }
+
+    public static boolean isBookSlotOccupied(Block block, int slot) {
+        String property = block.getProperty(BOOKSHELF_SLOT.formatted(slot));
+        return property != null && property.equals("true");
+    }
+
+    public static void openBook(Player player, ItemStack item) {
+        WrittenBookContent content = item.get(DataComponents.WRITTEN_BOOK_CONTENT);
+        if (content != null) {
+            net.kyori.adventure.inventory.Book book = net.kyori.adventure.inventory.Book.builder()
+                    .pages(content.pages().stream().map(ft -> ft.text()).toList())
+                    .title(Component.text(content.title().text())).author(Component.text(content.author())).build();
+
+            player.openBook(book);
+        }
+    }
+
+    public static Block setShelfBook(Block shelf, int slot, boolean has) {
+        return shelf.withProperty(BOOKSHELF_SLOT.formatted(slot), Boolean.toString(has));
     }
 }

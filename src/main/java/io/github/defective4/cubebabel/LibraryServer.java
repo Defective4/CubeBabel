@@ -1,5 +1,8 @@
 package io.github.defective4.cubebabel;
 
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
+
 import java.util.Objects;
 
 import io.github.defective4.cubebabel.book.BookManager;
@@ -14,10 +17,15 @@ import io.github.defective4.cubebabel.storage.PlayerStorage;
 import io.github.defective4.cubebabel.ui.UIManager;
 import io.github.defective4.jbabel.BabelCatalogue;
 import io.github.defective4.jbabel.BabelLibrary;
+import io.github.defective4.jbabel.BookLocation;
+import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.CommandManager;
+import net.minestom.server.component.DataComponents;
 import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.coordinate.Pos;
+import net.minestom.server.entity.EquipmentSlot;
+import net.minestom.server.entity.Player;
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
 import net.minestom.server.event.player.PlayerBlockBreakEvent;
 import net.minestom.server.event.player.PlayerBlockInteractEvent;
@@ -29,8 +37,10 @@ import net.minestom.server.instance.LightingChunk;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.block.BlockFace;
 import net.minestom.server.instance.generator.Generator;
+import net.minestom.server.inventory.TransactionOption;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
+import net.minestom.server.item.component.WrittenBookContent;
 import net.minestom.server.world.DimensionType;
 import net.minestom.server.world.DimensionType.Skybox;
 
@@ -128,25 +138,43 @@ public class LibraryServer {
             }
         });
 
-        MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockBreakEvent.class, e -> {
-            e.setCancelled(true);
-        });
+        MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockBreakEvent.class, e -> e.setCancelled(true));
 
-        MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockPlaceEvent.class, e -> {
-            e.setCancelled(true);
-        });
+        MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockPlaceEvent.class, e -> e.setCancelled(true));
 
         libraryInstance.eventNode().addListener(PlayerBlockInteractEvent.class, e -> {
             e.setCancelled(true);
-            if (e.getPlayer().isSneaking()) return;
+            Player player = e.getPlayer();
+            if (player.isSneaking()) return;
             BlockVec pos = e.getBlockPosition();
-            if (!e.getBlock().key().equals(Block.CHISELED_BOOKSHELF.key())) return;
-            BlockFace shelfFace = BookManager.getBlockFace(e.getBlock());
+            Block block = e.getBlock();
+            if (!block.key().equals(Block.CHISELED_BOOKSHELF.key())) return;
+            BlockFace shelfFace = BookManager.getBlockFace(block);
             if (e.getBlockFace() != shelfFace) return;
 
-            ItemStack book = bookManager.getBookAt(pos, e.getCursorPosition(), e.getBlockFace(), e.getBlock(),
-                    e.getInstance(), playerStorage.getDimension(e.getPlayer()));
-            e.getPlayer().getInventory().addItemStack(book);
+            int bookIndex = BookManager.getShelfBookIndex(e.getCursorPosition(), e.getBlockFace());
+            BookLocation location = BookManager.getBookCoordinates(pos, bookIndex, playerStorage.getDimension(player));
+            ItemStack book = bookManager.getBookFrom(location, block, e.getInstance());
+
+            if (BookManager.isBookSlotOccupied(block, bookIndex)) {
+                e.getInstance().setBlock(pos, BookManager.setShelfBook(block, location.book() % 6, false));
+                player.getInventory().addItemStack(book);
+            } else {
+                ItemStack item = player.getInventory().getEquipment(EquipmentSlot.MAIN_HAND, player.getHeldSlot());
+                WrittenBookContent bookContent = book.get(DataComponents.WRITTEN_BOOK_CONTENT);
+                if (item != null && item.material() == Material.WRITTEN_BOOK) {
+                    if (book.equals(item)) {
+                        player.getInventory().takeItemStack(item, TransactionOption.ALL);
+                        e.getInstance().setBlock(pos, BookManager.setShelfBook(block, location.book() % 6, true));
+                    } else {
+                        player.sendMessage(Component.text("The book won't fit here...").color(RED));
+                        sendLabel(player, bookContent);
+                    }
+                } else {
+                    player.sendMessage(Component.text("There is no book on this shelf anymore...").color(RED));
+                    sendLabel(player, bookContent);
+                }
+            }
         });
 
         hubCatalogue.initEvents();
@@ -160,5 +188,12 @@ public class LibraryServer {
         instance.setGenerator(generator);
         return instance;
 
+    }
+
+    private static void sendLabel(Player player, WrittenBookContent bookContent) {
+        player.sendMessage(Component.text("A label on this shelf reads ").color(RED)
+                .append(Component.text(bookContent.title().text()).color(YELLOW).decorate(UNDERLINED))
+                .append(Component.text(" by ").color(RED))
+                .append(Component.text(bookContent.author()).color(YELLOW).decorate(UNDERLINED)));
     }
 }

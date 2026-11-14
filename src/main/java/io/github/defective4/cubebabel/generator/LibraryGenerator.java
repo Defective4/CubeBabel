@@ -198,7 +198,7 @@ public class LibraryGenerator implements Generator {
 
         double deg = Math.toDegrees(Math.atan2(centerRoomLocation.blockX(), centerRoomLocation.blockZ()));
         if (deg == -HIGH_THRESHOLD)
-            return Sides.SNE;
+            return Sides.NES;
         else if (deg == LOW_THRESHOLD) return Sides.NSW;
 
         double offsetDeg = Math.toDegrees(Math.atan2(offsetRoomLocation.blockX(), offsetRoomLocation.blockZ()));
@@ -211,11 +211,11 @@ public class LibraryGenerator implements Generator {
                     || deg > LOW_THRESHOLD && offsetDeg < HIGH_THRESHOLD)
                 return Sides.NS;
             if (deg < -HIGH_THRESHOLD) return Sides.NESW;
-            if (offsetDeg > HIGH_THRESHOLD) return Sides.NWSE;
-            if (offsetDeg > -LOW_THRESHOLD && offsetDeg < LOW_THRESHOLD) return rx > 0 ? Sides.NESW : Sides.NWSE;
+            if (offsetDeg > HIGH_THRESHOLD) return Sides.SENW;
+            if (offsetDeg > -LOW_THRESHOLD && offsetDeg < LOW_THRESHOLD) return rx > 0 ? Sides.NESW : Sides.SENW;
         }
 
-        return new io.github.defective4.cubebabel.room.Sides();
+        return new Sides();
     }
 
     public static Block createBookshelf(Facing facing) {

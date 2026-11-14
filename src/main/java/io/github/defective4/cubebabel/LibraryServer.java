@@ -32,7 +32,9 @@ import net.minestom.server.event.player.PlayerBlockInteractEvent;
 import net.minestom.server.event.player.PlayerBlockPlaceEvent;
 import net.minestom.server.event.player.PlayerChatEvent;
 import net.minestom.server.event.player.PlayerLoadedEvent;
+import net.minestom.server.event.player.PlayerMoveEvent;
 import net.minestom.server.event.player.PlayerUseItemEvent;
+import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.InstanceContainer;
 import net.minestom.server.instance.LightingChunk;
 import net.minestom.server.instance.block.Block;
@@ -140,8 +142,23 @@ public class LibraryServer {
         });
 
         MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockBreakEvent.class, e -> e.setCancelled(true));
-
         MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockPlaceEvent.class, e -> e.setCancelled(true));
+        MinecraftServer.getGlobalEventHandler().addListener(PlayerMoveEvent.class, e -> {
+            Pos pos = e.getNewPosition();
+            if (pos.y() < 0) {
+                pos = pos.withY(39);
+                Player player = e.getPlayer();
+                Instance instance = player.getInstance();
+                for (int y = pos.blockY(); y < 100; y++) {
+                    pos = pos.add(0, 1, 0);
+                    if (instance.getBlock(pos).solid()) {
+                        pos = pos.add(0, 1, 0);
+                        break;
+                    }
+                }
+                player.teleport(pos);
+            }
+        });
 
         MinecraftServer.getGlobalEventHandler().addListener(PlayerChatEvent.class, e -> {
             Player player = e.getPlayer();

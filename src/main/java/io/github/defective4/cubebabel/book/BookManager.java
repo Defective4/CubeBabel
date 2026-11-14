@@ -6,6 +6,7 @@ import java.util.List;
 
 import io.github.defective4.cubebabel.LibraryServer;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
+import io.github.defective4.cubebabel.room.Side;
 import io.github.defective4.cubebabel.room.Sides;
 import io.github.defective4.jbabel.BabelLibrary;
 import io.github.defective4.jbabel.Book;
@@ -53,6 +54,45 @@ public class BookManager {
         return book;
     }
 
+    public static BlockVec calculateBookshelfCoordinates(BlockVec roomIndex, int wall) {
+        BlockVec center = LibraryGenerator.getRoomLocation(roomIndex.blockX(), roomIndex.blockZ());
+        Sides entrances = LibraryGenerator.calculateRoomEntrances(roomIndex.blockX(), roomIndex.blockZ());
+        int index = wall;
+        for (Side side : entrances.sides()) {
+            if (side.getWallIndex() <= index) {
+                index++;
+            }
+        }
+
+        BlockVec horizontal;
+        int xd, zd;
+
+        switch (index) {
+            case 0, 3 -> {
+                int mult = index == 3 ? 1 : -1;
+                xd = 2 * mult;
+                zd = 6 * mult;
+            }
+            case 2, 5 -> {
+                xd = index == 2 ? 7 : -7;
+                zd = index == 2 ? 1 : -1;
+            }
+            case 1, 4 -> {
+                xd = index == 1 ? 3 : -3;
+                zd = index == 1 ? -5 : 5;
+            }
+            default -> {
+                xd = 0;
+                zd = 0;
+            }
+        }
+
+        System.out.println("%s = %s".formatted(wall, index));
+
+        horizontal = center.add(xd, 0, zd);
+        return horizontal;
+    }
+
     public static BlockFace getBlockFace(Block block) {
         return BlockFace.valueOf(block.getProperty("facing").toUpperCase());
     }
@@ -93,11 +133,10 @@ public class BookManager {
             }
         }
         Sides entrances = LibraryGenerator.calculateRoomEntrances(index.blockX(), index.blockZ());
-        if (entrances.first() != null && wall >= entrances.first().getWallIndex()) {
-            wall--;
-        }
-        if (entrances.second() != null && wall >= entrances.second().getWallIndex()) {
-            wall--;
+        for (Side side : entrances.sides()) {
+            if (wall >= side.getWallIndex()) {
+                wall--;
+            }
         }
 
         BigInteger maxW = BigInteger.valueOf(LibraryServer.MAX_ROOM.blockX());

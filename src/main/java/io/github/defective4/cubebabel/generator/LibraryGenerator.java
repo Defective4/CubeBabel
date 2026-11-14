@@ -178,7 +178,7 @@ public class LibraryGenerator implements Generator {
         }
     }
 
-    public static io.github.defective4.cubebabel.room.Sides calculateRoomEntrances(int absX, int absZ) {
+    public static Sides calculateRoomEntrances(int absX, int absZ) {
         int rx = absX - LibraryServer.CENTER_ROOM.blockX();
         int rz = absZ - LibraryServer.CENTER_ROOM.blockZ();
         if (rx == 0) {
@@ -218,6 +218,14 @@ public class LibraryGenerator implements Generator {
         return new io.github.defective4.cubebabel.room.Sides();
     }
 
+    public static Block createBookshelf(Facing facing) {
+        Block shelf = Block.CHISELED_BOOKSHELF.withProperty("facing", facing.name().toLowerCase());
+        for (int i = 0; i < 6; i++) {
+            shelf = shelf.withProperty("slot_%s_occupied".formatted(i), "true");
+        }
+        return shelf;
+    }
+
     public static BlockVec getRoomIndex(BlockVec pos) {
         int z = pos.blockZ() + 7;
         boolean b = false;
@@ -254,14 +262,6 @@ public class LibraryGenerator implements Generator {
         int roomZ = z * 14 + roomX % 2 * 7;
 
         return new BlockVec(roomX, roomZ);
-    }
-
-    private static Block createBookshelf(Facing facing) {
-        Block shelf = Block.CHISELED_BOOKSHELF.withProperty("facing", facing.name().toLowerCase());
-        for (int i = 0; i < 6; i++) {
-            shelf = shelf.withProperty("slot_%s_occupied".formatted(i), "true");
-        }
-        return shelf;
     }
 
 }

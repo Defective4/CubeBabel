@@ -30,6 +30,7 @@ import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
 import net.minestom.server.event.player.PlayerBlockBreakEvent;
 import net.minestom.server.event.player.PlayerBlockInteractEvent;
 import net.minestom.server.event.player.PlayerBlockPlaceEvent;
+import net.minestom.server.event.player.PlayerChatEvent;
 import net.minestom.server.event.player.PlayerLoadedEvent;
 import net.minestom.server.event.player.PlayerUseItemEvent;
 import net.minestom.server.instance.InstanceContainer;
@@ -141,6 +142,25 @@ public class LibraryServer {
         MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockBreakEvent.class, e -> e.setCancelled(true));
 
         MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockPlaceEvent.class, e -> e.setCancelled(true));
+
+        MinecraftServer.getGlobalEventHandler().addListener(PlayerChatEvent.class, e -> {
+            Player player = e.getPlayer();
+            BlockVec pos = player.getPosition().asBlockVec();
+            BlockVec index = LibraryGenerator.getRoomIndex(pos);
+
+            for (int i = 0; i < 4; i++) {
+                BlockVec loc = BookManager.calculateBookshelfCoordinates(index, i);
+                player.sendMessage("%s = %s".formatted(i, loc));
+                if (loc != null) {
+                    player.getInstance().setBlock(loc.withBlockY(41), switch (i) {
+                        case 1 -> Block.YELLOW_WOOL;
+                        case 2 -> Block.BLUE_WOOL;
+                        case 3 -> Block.GREEN_WOOL;
+                        default -> Block.RED_WOOL;
+                    });
+                }
+            }
+        });
 
         libraryInstance.eventNode().addListener(PlayerBlockInteractEvent.class, e -> {
             e.setCancelled(true);

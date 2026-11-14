@@ -1,8 +1,11 @@
 package io.github.defective4.cubebabel.generator;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import io.github.defective4.cubebabel.LibraryServer;
+import io.github.defective4.cubebabel.block.Facing;
 import io.github.defective4.cubebabel.schematic.EntityDefinition;
 import io.github.defective4.cubebabel.schematic.Schematic;
 import net.minestom.server.coordinate.BlockVec;
@@ -35,7 +38,10 @@ public class HubGenerator implements Generator {
 
     private void placeHub(GenerationUnit unit) {
         BlockVec start = new BlockVec(0, 64, 0);
-        for (Entry<BlockVec, Block> entry : hub.getBlocks().entrySet()) {
+        Map<BlockVec, Block> map = new HashMap<>(hub.getBlocks());
+        map.put(new BlockVec(9, 1, 6),
+                Block.CHISELED_BOOKSHELF.withProperty("facing", Facing.WEST.name().toLowerCase()));
+        for (Entry<BlockVec, Block> entry : map.entrySet()) {
             BlockVec location = start.add(entry.getKey());
             if (location.sameChunk(unit.absoluteStart())) {
                 unit.modifier().setBlock(location, entry.getValue());

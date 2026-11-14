@@ -16,6 +16,17 @@ public record Sides(Side first, Side second) {
     public static final Sides NSW = new Sides(Side.N, Side.SW);
     public static final Sides NSE = new Sides(Side.N, Side.SE);
 
+    public Side[] sides() {
+        if (first == null && second == null)
+            return new Side[0];
+        else if (first == null)
+            return new Side[] { second };
+        else if (second == null)
+            return new Side[] { first };
+        else
+            return new Side[] { first, second };
+    }
+
     public boolean has(Side side) {
         if (first == null && second == null) return true;
         return first == side || second == side;

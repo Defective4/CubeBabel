@@ -15,12 +15,12 @@ import net.minestom.server.entity.Player;
 import net.minestom.server.event.player.PlayerLoadedEvent;
 
 public class PlayerStorage {
-    public static record HighlightedBook(BlockVec block, int book) {
+    public static record HighlightedBook(BlockVec block, BookLocation location, Point particlesLocation) {
     }
 
     private final Map<UUID, BigInteger> dimensions = new HashMap<>();
     private final Map<Player, HighlightedBook> highlightedBooks = new HashMap<>();
-    private final Map<Player, Point> resolvedHighlightedBooks = new HashMap<>();
+    private final Map<Player, HighlightedBook> resolvedHighlightedBooks = new HashMap<>();
 
     public BigInteger getDimension(Player player) {
         return dimensions.getOrDefault(player.getUuid(), BigInteger.ZERO);
@@ -30,16 +30,16 @@ public class PlayerStorage {
         return highlightedBooks;
     }
 
-    public Map<Player, Point> getResolvedHighlightedBooks() {
+    public Map<Player, HighlightedBook> getResolvedHighlightedBooks() {
         return resolvedHighlightedBooks;
     }
 
     public void highlightBook(Player player, BookLocation book, BlockVec center) {
         BlockVec bookshelf = BookManager.calculateBookshelfCoordinates(center, book.wall(), book.shelf(), book.book());
-        highlightedBooks.put(player, new HighlightedBook(bookshelf, book.book() % 6));
+        highlightedBooks.put(player, new HighlightedBook(bookshelf, book, null));
     }
 
-    public void resolveHighlight(Player player, Point particlePos) {
+    public void resolveHighlight(Player player, HighlightedBook particlePos) {
         resolvedHighlightedBooks.put(player, particlePos);
     }
 

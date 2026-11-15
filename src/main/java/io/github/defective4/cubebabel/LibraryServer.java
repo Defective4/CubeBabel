@@ -183,6 +183,10 @@ public class LibraryServer {
 
             int bookIndex = BookManager.getShelfBookIndex(e.getCursorPosition(), e.getBlockFace());
             BookLocation location = BookManager.getBookCoordinates(pos, bookIndex, playerStorage.getDimension(player));
+            HighlightedBook hl = playerStorage.getResolvedHighlightedBooks().get(player);
+            if (hl != null && hl.location().equals(location)) {
+                playerStorage.getResolvedHighlightedBooks().remove(player);
+            }
             ItemStack book = bookManager.getBookFrom(location, block, e.getInstance());
 
             if (BookManager.isBookSlotOccupied(block, bookIndex)) {
@@ -211,7 +215,7 @@ public class LibraryServer {
 
     private void initSchedulers() {
         Map<Player, HighlightedBook> hlBlocks = playerStorage.getHighlightedBooks();
-        Map<Player, Point> rlBlocks = playerStorage.getResolvedHighlightedBooks();
+        Map<Player, HighlightedBook> rlBlocks = playerStorage.getResolvedHighlightedBooks();
         List<Player> resolved = new ArrayList<>();
 
         SchedulerManager schedulerManager = MinecraftServer.getSchedulerManager();
@@ -223,7 +227,7 @@ public class LibraryServer {
                     continue;
                 }
                 HighlightedBook hlBook = entry.getValue();
-                int bookIndex = hlBook.book();
+                int bookIndex = hlBook.location().book() % 6;
                 BlockVec blockVec = hlBook.block();
                 if (libraryInstance.isChunkLoaded(blockVec)) {
                     Block block = libraryInstance.getBlock(blockVec);
@@ -241,7 +245,8 @@ public class LibraryServer {
                         };
 
                         if (player.isOnline()) {
-                            playerStorage.resolveHighlight(player, particleVec);
+                            playerStorage.resolveHighlight(player,
+                                    new HighlightedBook(blockVec, hlBook.location(), particleVec));
                         }
                         resolved.add(player);
                     }
@@ -253,8 +258,8 @@ public class LibraryServer {
                 }
                 resolved.clear();
             }
-            for (Entry<Player, Point> entry : rlBlocks.entrySet()) {
-                Point value = entry.getValue();
+            for (Entry<Player, HighlightedBook> entry : rlBlocks.entrySet()) {
+                Point value = entry.getValue().particlesLocation();
                 Player player = entry.getKey();
                 if (player.getInstance() != libraryInstance) {
                     continue;

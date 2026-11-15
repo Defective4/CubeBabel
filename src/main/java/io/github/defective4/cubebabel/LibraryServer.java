@@ -12,8 +12,8 @@ import java.util.UUID;
 
 import io.github.defective4.cubebabel.book.BookManager;
 import io.github.defective4.cubebabel.command.CenterCommand;
-import io.github.defective4.cubebabel.command.DebugCommand;
 import io.github.defective4.cubebabel.command.FindBookCommand;
+import io.github.defective4.cubebabel.command.GamemodeCommand;
 import io.github.defective4.cubebabel.command.RandomBookCommand;
 import io.github.defective4.cubebabel.command.SpawnCommand;
 import io.github.defective4.cubebabel.generator.HubGenerator;
@@ -184,7 +184,8 @@ public class LibraryServer {
         mgr.register(new SpawnCommand(this));
         mgr.register(new FindBookCommand(this));
         mgr.register(new CenterCommand(this));
-        mgr.register(new DebugCommand(this));
+//        mgr.register(new DebugCommand(this));
+        mgr.register(new GamemodeCommand());
     }
 
     private void initEvents() {

@@ -11,6 +11,7 @@ import java.util.Objects;
 
 import io.github.defective4.cubebabel.book.BookManager;
 import io.github.defective4.cubebabel.book.HubCatalogue;
+import io.github.defective4.cubebabel.command.CenterCommand;
 import io.github.defective4.cubebabel.command.FindBookCommand;
 import io.github.defective4.cubebabel.command.RandomBookCommand;
 import io.github.defective4.cubebabel.command.SpawnCommand;
@@ -73,10 +74,10 @@ public class LibraryServer {
     private final BabelLibrary library;
 
     private final InstanceContainer libraryInstance;
-    private final UIManager playerManager;
     private final PlayerStorage playerStorage = new PlayerStorage();
     private final SchematicManager schematicManager = new SchematicManager();
     private final MinecraftServer server;
+    private final UIManager uiManager;
 
     static {
         CENTER_ROOM = new BlockVec(MAX_ROOM.blockX() / 2, MAX_ROOM.blockZ() / 2);
@@ -91,7 +92,7 @@ public class LibraryServer {
         catalogue = new BabelCatalogue.Builder(library).withRandomBookBits(1024 * 16).create();
         bookManager = new BookManager(this);
         hubCatalogue = new HubCatalogue(this);
-        playerManager = new UIManager();
+        uiManager = new UIManager();
         initEvents();
         initCommands();
         initSchedulers();
@@ -113,16 +114,16 @@ public class LibraryServer {
         return libraryInstance;
     }
 
-    public UIManager getPlayerManager() {
-        return playerManager;
-    }
-
     public PlayerStorage getPlayerStorage() {
         return playerStorage;
     }
 
     public SchematicManager getSchematicManager() {
         return schematicManager;
+    }
+
+    public UIManager getUIManager() {
+        return uiManager;
     }
 
     public void start(String host, int port) {
@@ -135,6 +136,7 @@ public class LibraryServer {
         mgr.register(new RandomBookCommand(this));
         mgr.register(new SpawnCommand(this));
         mgr.register(new FindBookCommand(this));
+        mgr.register(new CenterCommand(this));
     }
 
     private void initEvents() {
@@ -285,6 +287,14 @@ public class LibraryServer {
                 resolved.clear();
             }
         }, TaskSchedule.immediate(), TaskSchedule.tick(5));
+    }
+
+    public static void teleportPlayer(Player player, InstanceContainer instance, Pos target) {
+        if (player.getInstance() == instance) {
+            player.teleport(target);
+        } else {
+            player.setInstance(instance, target);
+        }
     }
 
     private static InstanceContainer initInstance(String dimension, Generator generator) {

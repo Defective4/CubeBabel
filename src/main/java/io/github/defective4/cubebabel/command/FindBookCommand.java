@@ -89,17 +89,17 @@ public class FindBookCommand extends Command implements CommandExecutor {
     }
 
     private void openAuthorSearch(Player player, Consumer<String> consumer) {
-        server.getPlayerManager().openAnvilForResult(player, "Search by author", "Author", consumer);
+        server.getUIManager().openAnvilForResult(player, "Search by author", "Author", consumer);
     }
 
     private void openContentSearch(Player player, Consumer<String> consumer) {
-        server.getPlayerManager().chatPrompt(player, Component
+        server.getUIManager().chatPrompt(player, Component
                 .text("Enter content of the book you want to search for in the chat").color(NamedTextColor.AQUA),
                 consumer);
     }
 
     private void openTitleSearch(Player player, Consumer<String> consumer) {
-        server.getPlayerManager().openAnvilForResult(player, "Search by book title", "Title", consumer);
+        server.getUIManager().openAnvilForResult(player, "Search by book title", "Title", consumer);
     }
 
     private void teleportPlayer(Player player, Book book) {

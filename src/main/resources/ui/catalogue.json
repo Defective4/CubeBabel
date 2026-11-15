@@ -11,6 +11,11 @@
             {
                 "text": "[Random book]",
                 "command": "random"
+            },
+            "\n\n> ",
+            {
+                "text": "[Library center]",
+                "command": "center"
             }
         ],
         [

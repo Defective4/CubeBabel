@@ -34,9 +34,10 @@ public class PlayerStorage {
         return resolvedHighlightedBooks;
     }
 
-    public void highlightBook(Player player, BookLocation book, BlockVec center) {
+    public BlockVec highlightBook(Player player, BookLocation book, BlockVec center) {
         BlockVec bookshelf = BookManager.calculateBookshelfCoordinates(center, book.wall(), book.shelf(), book.book());
         highlightedBooks.put(player, new HighlightedBook(bookshelf, book, null));
+        return bookshelf;
     }
 
     public void resolveHighlight(Player player, HighlightedBook particlePos) {

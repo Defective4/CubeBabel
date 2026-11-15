@@ -113,12 +113,12 @@ public class FindBookCommand extends Command implements CommandExecutor {
 
         // TODO teleport if on the same instance
         BlockVec center = LibraryGenerator.getRoomLocation(x, z).withBlockY(41);
-        player.setInstance(server.getLibraryInstance(), center.asPos());
-        server.getPlayerStorage().highlightBook(player, location, center);
+        BlockVec coordinates = server.getPlayerStorage().highlightBook(player, location, center);
+        double xD = coordinates.blockX() + 0.5 - center.blockX() + 0.5;
+        double zD = coordinates.blockZ() + 0.5 - center.blockZ() + 0.5;
+        float yaw = (float) Math.toDegrees(Math.atan2(zD, xD)) - 90;
 
-        player.sendMessage(Component.text(location.wall()));
-        player.sendMessage(Component.text(location.shelf()));
-        player.sendMessage(Component.text(location.book()));
+        player.setInstance(server.getLibraryInstance(), center.asPos().withYaw(yaw));
     }
 
     private static String getPaddedString(String str, int len) {

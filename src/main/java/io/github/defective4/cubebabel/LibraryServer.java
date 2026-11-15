@@ -3,6 +3,10 @@ package io.github.defective4.cubebabel;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 
 import io.github.defective4.cubebabel.book.BookManager;
@@ -14,15 +18,18 @@ import io.github.defective4.cubebabel.generator.HubGenerator;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import io.github.defective4.cubebabel.schematic.SchematicManager;
 import io.github.defective4.cubebabel.storage.PlayerStorage;
+import io.github.defective4.cubebabel.storage.PlayerStorage.HighlightedBook;
 import io.github.defective4.cubebabel.ui.UIManager;
 import io.github.defective4.jbabel.BabelCatalogue;
 import io.github.defective4.jbabel.BabelLibrary;
 import io.github.defective4.jbabel.BookLocation;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.CommandManager;
 import net.minestom.server.component.DataComponents;
 import net.minestom.server.coordinate.BlockVec;
+import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.EquipmentSlot;
 import net.minestom.server.entity.Player;
@@ -43,6 +50,10 @@ import net.minestom.server.inventory.TransactionOption;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
 import net.minestom.server.item.component.WrittenBookContent;
+import net.minestom.server.network.packet.server.play.ParticlePacket;
+import net.minestom.server.particle.Particle;
+import net.minestom.server.timer.SchedulerManager;
+import net.minestom.server.timer.TaskSchedule;
 import net.minestom.server.world.DimensionType;
 import net.minestom.server.world.DimensionType.Skybox;
 
@@ -80,6 +91,7 @@ public class LibraryServer {
         playerManager = new UIManager();
         initEvents();
         initCommands();
+        initSchedulers();
     }
 
     public BabelCatalogue getCatalogue() {
@@ -197,6 +209,74 @@ public class LibraryServer {
         hubCatalogue.initEvents();
     }
 
+    private void initSchedulers() {
+        Map<Player, HighlightedBook> hlBlocks = playerStorage.getHighlightedBooks();
+        Map<Player, Point> rlBlocks = playerStorage.getResolvedHighlightedBooks();
+        List<Player> resolved = new ArrayList<>();
+
+        SchedulerManager schedulerManager = MinecraftServer.getSchedulerManager();
+        schedulerManager.scheduleTask(() -> {
+            for (Entry<Player, HighlightedBook> entry : hlBlocks.entrySet()) {
+                Player player = entry.getKey();
+                if (!player.isOnline()) {
+                    resolved.add(player);
+                    continue;
+                }
+                HighlightedBook hlBook = entry.getValue();
+                int bookIndex = hlBook.book();
+                BlockVec blockVec = hlBook.block();
+                if (libraryInstance.isChunkLoaded(blockVec)) {
+                    Block block = libraryInstance.getBlock(blockVec);
+                    if (block.material() == Material.CHISELED_BOOKSHELF) {
+                        BlockFace face = BookManager.getBlockFace(block);
+                        Pos particleVec = blockVec.asPos().add(0.5, bookIndex >= 3 ? 0.1 : 0.6, 0.5);
+
+                        double mod = 1 / 3d / 2d + bookIndex % 3 / 3d - 0.5;
+
+                        particleVec = switch (face) {
+                            default -> particleVec.sub(0.6, 0, -mod);
+                            case SOUTH -> particleVec.add(mod, 0, 0.6);
+                            case EAST -> particleVec.add(0.6, 0, -mod);
+                            case NORTH -> particleVec.sub(mod, 0, 0.6);
+                        };
+
+                        if (player.isOnline()) {
+                            playerStorage.resolveHighlight(player, particleVec);
+                        }
+                        resolved.add(player);
+                    }
+                }
+            }
+            if (!resolved.isEmpty()) {
+                for (Player u : resolved) {
+                    hlBlocks.remove(u);
+                }
+                resolved.clear();
+            }
+            for (Entry<Player, Point> entry : rlBlocks.entrySet()) {
+                Point value = entry.getValue();
+                Player player = entry.getKey();
+                if (player.getInstance() != libraryInstance) {
+                    continue;
+                }
+                if (!player.isOnline()) {
+                    resolved.add(player);
+                    continue;
+                }
+                if (libraryInstance.isChunkLoaded(value) && value.distance(player.getPosition()) < 13) {
+                    Particle particle = Particle.DUST.withColor(NamedTextColor.GREEN);
+                    player.sendPacket(new ParticlePacket(particle, value, new Pos(0, 0, 0), 0, 1));
+                }
+            }
+            if (!resolved.isEmpty()) {
+                for (Player u : resolved) {
+                    rlBlocks.remove(u);
+                }
+                resolved.clear();
+            }
+        }, TaskSchedule.immediate(), TaskSchedule.tick(5));
+    }
+
     private static InstanceContainer initInstance(String dimension, Generator generator) {
         InstanceContainer instance = MinecraftServer.getInstanceManager()
                 .createInstanceContainer(MinecraftServer.getDimensionTypeRegistry().register(dimension,
@@ -204,7 +284,6 @@ public class LibraryServer {
         instance.setChunkSupplier(LightingChunk::new);
         instance.setGenerator(generator);
         return instance;
-
     }
 
     private static void sendLabel(Player player, WrittenBookContent bookContent) {

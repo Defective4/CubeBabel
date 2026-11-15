@@ -20,6 +20,7 @@ import net.minestom.server.command.builder.CommandContext;
 import net.minestom.server.command.builder.CommandExecutor;
 import net.minestom.server.command.builder.arguments.ArgumentEnum;
 import net.minestom.server.command.builder.arguments.ArgumentType;
+import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.entity.Player;
 
 public class FindBookCommand extends Command implements CommandExecutor {
@@ -110,7 +111,10 @@ public class FindBookCommand extends Command implements CommandExecutor {
         int z = room.divide(maxW).intValueExact();
         int x = room.mod(maxW).intValueExact();
 
-        player.setInstance(server.getLibraryInstance(), LibraryGenerator.getRoomLocation(x, z).asPos().withY(42));
+        // TODO teleport if on the same instance
+        BlockVec center = LibraryGenerator.getRoomLocation(x, z).withBlockY(41);
+        player.setInstance(server.getLibraryInstance(), center.asPos());
+        server.getPlayerStorage().highlightBook(player, location, center);
 
         player.sendMessage(Component.text(location.wall()));
         player.sendMessage(Component.text(location.shelf()));

@@ -54,20 +54,19 @@ public class BookManager {
         return book;
     }
 
-    public static BlockVec calculateBookshelfCoordinates(BlockVec roomIndex, int wall, int shelf) {
-        BlockVec center = LibraryGenerator.getRoomLocation(roomIndex.blockX(), roomIndex.blockZ());
+    public static BlockVec calculateBookshelfCoordinates(BlockVec center, int wall, int shelf, int book) {
+        BlockVec roomIndex = LibraryGenerator.getRoomIndex(center);
         Sides entrances = LibraryGenerator.calculateRoomEntrances(roomIndex.blockX(), roomIndex.blockZ());
         int index = wall;
         for (Side side : entrances.sides()) {
             if (side.getWallIndex() <= index) {
                 index++;
             }
-            System.out.println(side);
-            System.out.println(index);
         }
 
         BlockVec horizontal;
         int xd, zd;
+        int shelfH = book / 6;
 
         switch (index) {
             case 0, 3 -> {
@@ -75,23 +74,23 @@ public class BookManager {
                 xd = 2 * incr;
                 zd = 6 * incr;
 
-                xd += -incr * shelf;
+                xd += -incr * shelfH;
             }
             case 2, 5 -> {
                 int incr = index == 2 ? 1 : -1;
                 xd = 7 * incr;
                 zd = 1 * incr;
 
-                xd += -incr * shelf;
-                zd += incr * shelf;
+                xd += -incr * shelfH;
+                zd += incr * shelfH;
             }
             case 1, 4 -> {
                 int incr = index == 1 ? 1 : -1;
                 xd = 3 * incr;
                 zd = 5 * -incr;
 
-                xd += incr * shelf;
-                zd += incr * shelf;
+                xd += incr * shelfH;
+                zd += incr * shelfH;
             }
             default -> {
                 xd = 0;
@@ -99,7 +98,7 @@ public class BookManager {
             }
         }
 
-        horizontal = center.add(xd, 0, zd);
+        horizontal = center.add(xd, shelf, zd);
         return horizontal;
     }
 

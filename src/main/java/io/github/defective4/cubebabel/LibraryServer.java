@@ -23,6 +23,8 @@ import io.github.defective4.cubebabel.ui.UIManager;
 import io.github.defective4.jbabel.BabelCatalogue;
 import io.github.defective4.jbabel.BabelLibrary;
 import io.github.defective4.jbabel.BookLocation;
+import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.sound.Sound.Source;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.MinecraftServer;
@@ -52,6 +54,7 @@ import net.minestom.server.item.Material;
 import net.minestom.server.item.component.WrittenBookContent;
 import net.minestom.server.network.packet.server.play.ParticlePacket;
 import net.minestom.server.particle.Particle;
+import net.minestom.server.sound.SoundEvent;
 import net.minestom.server.timer.SchedulerManager;
 import net.minestom.server.timer.TaskSchedule;
 import net.minestom.server.world.DimensionType;
@@ -192,6 +195,7 @@ public class LibraryServer {
             if (BookManager.isBookSlotOccupied(block, bookIndex)) {
                 e.getInstance().setBlock(pos, BookManager.setShelfBook(block, location.book() % 6, false));
                 player.getInventory().addItemStack(book);
+                player.playSound(Sound.sound(SoundEvent.BLOCK_CHISELED_BOOKSHELF_PICKUP, Source.BLOCK, 1f, 1f));
             } else {
                 ItemStack item = player.getInventory().getEquipment(EquipmentSlot.MAIN_HAND, player.getHeldSlot());
                 WrittenBookContent bookContent = book.get(DataComponents.WRITTEN_BOOK_CONTENT);
@@ -199,6 +203,7 @@ public class LibraryServer {
                     if (book.equals(item)) {
                         player.getInventory().takeItemStack(item, TransactionOption.ALL);
                         e.getInstance().setBlock(pos, BookManager.setShelfBook(block, location.book() % 6, true));
+                        player.playSound(Sound.sound(SoundEvent.BLOCK_CHISELED_BOOKSHELF_INSERT, Source.BLOCK, 1f, 1f));
                     } else {
                         player.sendMessage(Component.text("The book won't fit here...").color(RED));
                         sendLabel(player, bookContent);

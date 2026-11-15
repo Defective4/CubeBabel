@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 
 import io.github.defective4.cubebabel.book.BookManager;
-import io.github.defective4.cubebabel.book.HubCatalogue;
 import io.github.defective4.cubebabel.command.CenterCommand;
 import io.github.defective4.cubebabel.command.FindBookCommand;
 import io.github.defective4.cubebabel.command.RandomBookCommand;
@@ -20,6 +19,7 @@ import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import io.github.defective4.cubebabel.schematic.SchematicManager;
 import io.github.defective4.cubebabel.storage.PlayerStorage;
 import io.github.defective4.cubebabel.storage.PlayerStorage.HighlightedBook;
+import io.github.defective4.cubebabel.ui.HubCatalogue;
 import io.github.defective4.cubebabel.ui.UIManager;
 import io.github.defective4.jbabel.BabelCatalogue;
 import io.github.defective4.jbabel.BabelLibrary;

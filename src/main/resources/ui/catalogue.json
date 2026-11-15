@@ -5,16 +5,19 @@
             "> ",
             {
                 "text": "[Find a book]",
+                "hover": "Find a book by title, author, or contents",
                 "page": 2
             },
             "\n\n> ",
             {
-                "text": "[Random book]",
+                "text": "[Random room]",
+                "hover": "Teleport to a random room in the library",
                 "command": "random"
             },
             "\n\n> ",
             {
                 "text": "[Library center]",
+                "hover": "Teleport to the center room in the library",
                 "command": "center"
             }
         ],

@@ -22,11 +22,7 @@ public class SpawnCommand extends Command implements CommandExecutor {
     @Override
     public void apply(CommandSender sender, CommandContext ctx) {
         Player player = (Player) sender;
-        if (player.getInstance() == server.getHubInstance()) {
-            player.teleport(LibraryServer.SPAWN_POINT);
-        } else {
-            player.setInstance(server.getHubInstance(), LibraryServer.SPAWN_POINT);
-        }
+        LibraryServer.teleportPlayer(player, server.getHubInstance(), LibraryServer.SPAWN_POINT);
         player.sendMessage(Component.text("Teleported to spawn").color(NamedTextColor.GREEN));
     }
 }

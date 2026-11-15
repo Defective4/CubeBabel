@@ -120,11 +120,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
 
         Pos pos = center.asPos().withYaw(yaw);
 
-        if (player.getInstance() == server.getLibraryInstance()) {
-            player.teleport(pos);
-        } else {
-            player.setInstance(server.getLibraryInstance(), pos);
-        }
+        LibraryServer.teleportPlayer(player, server.getLibraryInstance(), pos);
     }
 
     private static String getPaddedString(String str, int len) {

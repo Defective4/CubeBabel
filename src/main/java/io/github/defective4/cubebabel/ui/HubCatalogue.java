@@ -1,4 +1,4 @@
-package io.github.defective4.cubebabel.book;
+package io.github.defective4.cubebabel.ui;
 
 import static net.kyori.adventure.text.format.TextDecoration.*;
 
@@ -17,6 +17,7 @@ import io.github.defective4.cubebabel.LibraryServer;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.event.player.PlayerBlockInteractEvent;
 import net.minestom.server.event.player.PlayerEntityInteractEvent;
@@ -48,6 +49,10 @@ public class HubCatalogue {
                         part = Component.text(lineObj.get("text").getAsString()).decoration(BOLD, false);
                         if (lineObj.has("bold")) {
                             part = part.decorate(BOLD);
+                        }
+                        if (lineObj.has("hover")) {
+                            part = part.hoverEvent(
+                                    HoverEvent.showText(Component.text(lineObj.get("hover").getAsString())));
                         }
                         if (lineObj.has("page")) {
                             part = part.decorate(UNDERLINED)

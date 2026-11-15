@@ -46,11 +46,7 @@ public class RandomBookCommand extends Command implements CommandExecutor {
 
         server.getPlayerStorage().setDimension(player, dimension);
         Pos pos = LibraryGenerator.getRoomLocation(x, z).asPos().withY(42);
-        if (player.getInstance() == server.getLibraryInstance()) {
-            player.teleport(pos);
-        } else {
-            player.setInstance(server.getLibraryInstance(), pos);
-        }
+        LibraryServer.teleportPlayer(player, server.getLibraryInstance(), pos);
     }
 
 }

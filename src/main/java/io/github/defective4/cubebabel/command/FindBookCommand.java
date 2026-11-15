@@ -21,6 +21,7 @@ import net.minestom.server.command.builder.CommandExecutor;
 import net.minestom.server.command.builder.arguments.ArgumentEnum;
 import net.minestom.server.command.builder.arguments.ArgumentType;
 import net.minestom.server.coordinate.BlockVec;
+import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.Player;
 
 public class FindBookCommand extends Command implements CommandExecutor {
@@ -111,14 +112,19 @@ public class FindBookCommand extends Command implements CommandExecutor {
         int z = room.divide(maxW).intValueExact();
         int x = room.mod(maxW).intValueExact();
 
-        // TODO teleport if on the same instance
         BlockVec center = LibraryGenerator.getRoomLocation(x, z).withBlockY(41);
         BlockVec coordinates = server.getPlayerStorage().highlightBook(player, location, center);
         double xD = coordinates.blockX() + 0.5 - center.blockX() + 0.5;
         double zD = coordinates.blockZ() + 0.5 - center.blockZ() + 0.5;
         float yaw = (float) Math.toDegrees(Math.atan2(zD, xD)) - 90;
 
-        player.setInstance(server.getLibraryInstance(), center.asPos().withYaw(yaw));
+        Pos pos = center.asPos().withYaw(yaw);
+
+        if (player.getInstance() == server.getLibraryInstance()) {
+            player.teleport(pos);
+        } else {
+            player.setInstance(server.getLibraryInstance(), pos);
+        }
     }
 
     private static String getPaddedString(String str, int len) {

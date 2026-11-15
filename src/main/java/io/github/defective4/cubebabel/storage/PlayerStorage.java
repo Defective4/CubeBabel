@@ -66,8 +66,15 @@ public class PlayerStorage {
     }
 
     public void putBookshelf(Player player, BlockVec pos, Block block) {
-        playerBookshelves.computeIfAbsent(player, _ -> new HashMap<>()).put(pos, block);
+        Map<BlockVec, Block> map = playerBookshelves.computeIfAbsent(player, _ -> new HashMap<>());
         player.sendPacket(new BlockChangePacket(pos, block));
+        for (int i = 0; i < 6; i++)
+            if (!BookManager.isBookSlotOccupied(block, i)) {
+                map.put(pos, block);
+                return;
+            }
+        map.remove(pos);
+        clean(player, map);
     }
 
     public void removeBookshelves(Player player) {
@@ -81,9 +88,7 @@ public class PlayerStorage {
             return vec.chunkX() == chunkX && vec.chunkZ() == chunkZ;
         }).toList();
         list.forEach(map::remove);
-        if (map.isEmpty()) {
-            playerBookshelves.remove(player);
-        }
+        clean(player, map);
     }
 
     public void resolveHighlight(Player player, HighlightedBook particlePos) {
@@ -92,6 +97,12 @@ public class PlayerStorage {
 
     public void setDimension(Player player, BigInteger dimension) {
         dimensions.put(player.getUuid(), Objects.requireNonNull(dimension));
+    }
+
+    private void clean(Player player, Map<BlockVec, Block> map) {
+        if (map.isEmpty()) {
+            playerBookshelves.remove(player);
+        }
     }
 
     public static void initPlayer(PlayerLoadedEvent event) {

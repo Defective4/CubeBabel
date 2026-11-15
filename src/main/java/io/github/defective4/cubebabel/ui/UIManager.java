@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.component.DataComponents;
@@ -33,7 +34,9 @@ public class UIManager {
                 ItemStack item = anvil.getItemStack(0);
                 if (item != null && !item.isAir()) {
                     anvil.setItemStack(2,
-                            e.getInput().isBlank() ? ItemStack.AIR : item.withCustomName(Component.text(e.getInput())));
+                            e.getInput().isBlank() ? ItemStack.AIR
+                                    : item.withCustomName(
+                                            Component.text(e.getInput()).decoration(TextDecoration.ITALIC, false)));
                     anvil.setRepairCost((short) 0);
                 }
             }

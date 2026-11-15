@@ -19,8 +19,11 @@
             }
         ],
         [
-            "Find a book\n\n",
-            "> ",
+            {
+                "text": "Find a book",
+                "bold": true
+            },
+            "\n\n> ",
             {
                 "text": "[By title]",
                 "command": "find TITLE"

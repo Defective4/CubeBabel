@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.UUID;
 
 import io.github.defective4.cubebabel.book.BookManager;
 import io.github.defective4.cubebabel.command.CenterCommand;
@@ -60,6 +61,7 @@ import net.minestom.server.item.component.WrittenBookContent;
 import net.minestom.server.network.packet.server.play.ChunkDataPacket;
 import net.minestom.server.network.packet.server.play.ParticlePacket;
 import net.minestom.server.network.packet.server.play.UnloadChunkPacket;
+import net.minestom.server.network.player.GameProfile;
 import net.minestom.server.particle.Particle;
 import net.minestom.server.sound.SoundEvent;
 import net.minestom.server.timer.SchedulerManager;
@@ -103,6 +105,11 @@ public class LibraryServer {
         initEvents();
         initCommands();
         initSchedulers();
+
+        MinecraftServer.getConnectionManager()
+                .setPlayerProvider((con, profile) -> new Player(con,
+                        new GameProfile(UUID.nameUUIDFromBytes("OfflinePlayer:".formatted(profile.name()).getBytes()),
+                                profile.name())));
     }
 
     public BabelCatalogue getCatalogue() {

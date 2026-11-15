@@ -11,6 +11,7 @@ import java.util.Objects;
 
 import io.github.defective4.cubebabel.book.BookManager;
 import io.github.defective4.cubebabel.command.CenterCommand;
+import io.github.defective4.cubebabel.command.DebugCommand;
 import io.github.defective4.cubebabel.command.FindBookCommand;
 import io.github.defective4.cubebabel.command.RandomBookCommand;
 import io.github.defective4.cubebabel.command.SpawnCommand;
@@ -36,12 +37,15 @@ import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.EquipmentSlot;
 import net.minestom.server.entity.Player;
+import net.minestom.server.event.GlobalEventHandler;
+import net.minestom.server.event.instance.AddEntityToInstanceEvent;
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
 import net.minestom.server.event.player.PlayerBlockBreakEvent;
 import net.minestom.server.event.player.PlayerBlockInteractEvent;
 import net.minestom.server.event.player.PlayerBlockPlaceEvent;
 import net.minestom.server.event.player.PlayerLoadedEvent;
 import net.minestom.server.event.player.PlayerMoveEvent;
+import net.minestom.server.event.player.PlayerPacketOutEvent;
 import net.minestom.server.event.player.PlayerUseItemEvent;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.InstanceContainer;
@@ -53,7 +57,9 @@ import net.minestom.server.inventory.TransactionOption;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
 import net.minestom.server.item.component.WrittenBookContent;
+import net.minestom.server.network.packet.server.play.ChunkDataPacket;
 import net.minestom.server.network.packet.server.play.ParticlePacket;
+import net.minestom.server.network.packet.server.play.UnloadChunkPacket;
 import net.minestom.server.particle.Particle;
 import net.minestom.server.sound.SoundEvent;
 import net.minestom.server.timer.SchedulerManager;
@@ -74,7 +80,7 @@ public class LibraryServer {
     private final BabelLibrary library;
 
     private final InstanceContainer libraryInstance;
-    private final PlayerStorage playerStorage = new PlayerStorage();
+    private final PlayerStorage playerStorage;
     private final SchematicManager schematicManager = new SchematicManager();
     private final MinecraftServer server;
     private final UIManager uiManager;
@@ -89,6 +95,7 @@ public class LibraryServer {
         server = MinecraftServer.init();
         libraryInstance = initInstance("babel:library", new LibraryGenerator(this));
         hubInstance = initInstance("babel:hub", new HubGenerator(schematicManager.getHub(), this));
+        playerStorage = new PlayerStorage();
         catalogue = new BabelCatalogue.Builder(library).withRandomBookBits(1024 * 16).create();
         bookManager = new BookManager(this);
         hubCatalogue = new HubCatalogue(this);
@@ -130,6 +137,39 @@ public class LibraryServer {
         server.start(host, port);
     }
 
+    private void handleInteraction(Player player, BlockVec pos, Block block, Point cursorPosition, BlockFace blockFace,
+            Instance instance) {
+        int bookIndex = BookManager.getShelfBookIndex(cursorPosition, blockFace);
+        BookLocation location = BookManager.getBookCoordinates(pos, bookIndex, playerStorage.getDimension(player));
+        HighlightedBook hl = playerStorage.getResolvedHighlightedBooks().get(player);
+        if (hl != null && hl.location().equals(location)) {
+            playerStorage.getResolvedHighlightedBooks().remove(player);
+        }
+        ItemStack book = bookManager.getBookFrom(location, block, instance);
+
+        if (BookManager.isBookSlotOccupied(block, bookIndex)) {
+            playerStorage.putBookshelf(player, pos, BookManager.setShelfBook(block, location.book() % 6, false));
+            player.getInventory().addItemStack(book);
+            player.playSound(Sound.sound(SoundEvent.BLOCK_CHISELED_BOOKSHELF_PICKUP, Source.BLOCK, 1f, 1f));
+        } else {
+            ItemStack item = player.getInventory().getEquipment(EquipmentSlot.MAIN_HAND, player.getHeldSlot());
+            WrittenBookContent bookContent = book.get(DataComponents.WRITTEN_BOOK_CONTENT);
+            if (item != null && item.material() == Material.WRITTEN_BOOK) {
+                if (book.equals(item)) {
+                    player.getInventory().takeItemStack(item, TransactionOption.ALL);
+                    playerStorage.putBookshelf(player, pos, BookManager.setShelfBook(block, location.book() % 6, true));
+                    player.playSound(Sound.sound(SoundEvent.BLOCK_CHISELED_BOOKSHELF_INSERT, Source.BLOCK, 1f, 1f));
+                } else {
+                    player.sendMessage(Component.text("The book won't fit here...").color(RED));
+                    sendLabel(player, bookContent);
+                }
+            } else {
+                player.sendMessage(Component.text("There is no book on this shelf anymore...").color(RED));
+                sendLabel(player, bookContent);
+            }
+        }
+    }
+
     private void initCommands() {
         CommandManager mgr = MinecraftServer.getCommandManager();
 
@@ -137,29 +177,31 @@ public class LibraryServer {
         mgr.register(new SpawnCommand(this));
         mgr.register(new FindBookCommand(this));
         mgr.register(new CenterCommand(this));
+        mgr.register(new DebugCommand(this));
     }
 
     private void initEvents() {
-        MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerConfigurationEvent.class, e -> {
+        GlobalEventHandler handler = MinecraftServer.getGlobalEventHandler();
+        handler.addListener(AsyncPlayerConfigurationEvent.class, e -> {
             Pos vec = SPAWN_POINT;
             e.getPlayer().setRespawnPoint(vec);
             e.setSpawningInstance(hubInstance);
         });
 
-        MinecraftServer.getGlobalEventHandler().addListener(PlayerLoadedEvent.class, event -> {
+        handler.addListener(PlayerLoadedEvent.class, event -> {
             PlayerStorage.initPlayer(event);
         });
 
-        MinecraftServer.getGlobalEventHandler().addListener(PlayerUseItemEvent.class, e -> {
+        handler.addListener(PlayerUseItemEvent.class, e -> {
             ItemStack item = e.getItemStack();
             if (item != null && item.material() == Material.WRITTEN_BOOK) {
                 BookManager.openBook(e.getPlayer(), item);
             }
         });
 
-        MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockBreakEvent.class, e -> e.setCancelled(true));
-        MinecraftServer.getGlobalEventHandler().addListener(PlayerBlockPlaceEvent.class, e -> e.setCancelled(true));
-        MinecraftServer.getGlobalEventHandler().addListener(PlayerMoveEvent.class, e -> {
+        handler.addListener(PlayerBlockBreakEvent.class, e -> e.setCancelled(true));
+        handler.addListener(PlayerBlockPlaceEvent.class, e -> e.setCancelled(true));
+        handler.addListener(PlayerMoveEvent.class, e -> {
             Pos pos = e.getNewPosition();
             if (pos.y() < 0) {
                 pos = pos.withY(39);
@@ -175,46 +217,36 @@ public class LibraryServer {
                 player.teleport(pos);
             }
         });
+        handler.addListener(PlayerPacketOutEvent.class, e -> {
+            int cx, cz;
+            if (e.getPacket() instanceof ChunkDataPacket p) {
+                cx = p.chunkX();
+                cz = p.chunkZ();
+            } else if (e.getPacket() instanceof UnloadChunkPacket p) {
+                cx = p.chunkX();
+                cz = p.chunkZ();
+            } else
+                return;
+            playerStorage.removeBookshelves(e.getPlayer(), cx, cz);
+        });
+        handler.addListener(AddEntityToInstanceEvent.class, e -> {
+            if (e.getEntity() instanceof Player player) {
+                playerStorage.removeBookshelves(player);
+            }
+        });
 
         libraryInstance.eventNode().addListener(PlayerBlockInteractEvent.class, e -> {
             e.setCancelled(true);
+            if (e.getInstance() != libraryInstance) return;
             Player player = e.getPlayer();
             if (player.isSneaking()) return;
             BlockVec pos = e.getBlockPosition();
-            Block block = e.getBlock();
+            Block block = playerStorage.getBookshelf(player, pos);
             if (!block.key().equals(Block.CHISELED_BOOKSHELF.key())) return;
             BlockFace shelfFace = BookManager.getBlockFace(block);
             if (e.getBlockFace() != shelfFace) return;
 
-            int bookIndex = BookManager.getShelfBookIndex(e.getCursorPosition(), e.getBlockFace());
-            BookLocation location = BookManager.getBookCoordinates(pos, bookIndex, playerStorage.getDimension(player));
-            HighlightedBook hl = playerStorage.getResolvedHighlightedBooks().get(player);
-            if (hl != null && hl.location().equals(location)) {
-                playerStorage.getResolvedHighlightedBooks().remove(player);
-            }
-            ItemStack book = bookManager.getBookFrom(location, block, e.getInstance());
-
-            if (BookManager.isBookSlotOccupied(block, bookIndex)) {
-                e.getInstance().setBlock(pos, BookManager.setShelfBook(block, location.book() % 6, false));
-                player.getInventory().addItemStack(book);
-                player.playSound(Sound.sound(SoundEvent.BLOCK_CHISELED_BOOKSHELF_PICKUP, Source.BLOCK, 1f, 1f));
-            } else {
-                ItemStack item = player.getInventory().getEquipment(EquipmentSlot.MAIN_HAND, player.getHeldSlot());
-                WrittenBookContent bookContent = book.get(DataComponents.WRITTEN_BOOK_CONTENT);
-                if (item != null && item.material() == Material.WRITTEN_BOOK) {
-                    if (book.equals(item)) {
-                        player.getInventory().takeItemStack(item, TransactionOption.ALL);
-                        e.getInstance().setBlock(pos, BookManager.setShelfBook(block, location.book() % 6, true));
-                        player.playSound(Sound.sound(SoundEvent.BLOCK_CHISELED_BOOKSHELF_INSERT, Source.BLOCK, 1f, 1f));
-                    } else {
-                        player.sendMessage(Component.text("The book won't fit here...").color(RED));
-                        sendLabel(player, bookContent);
-                    }
-                } else {
-                    player.sendMessage(Component.text("There is no book on this shelf anymore...").color(RED));
-                    sendLabel(player, bookContent);
-                }
-            }
+            handleInteraction(player, pos, block, e.getCursorPosition(), shelfFace, e.getInstance());
         });
 
         hubCatalogue.initEvents();

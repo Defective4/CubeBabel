@@ -108,7 +108,7 @@ public class LibraryServer {
 
         MinecraftServer.getConnectionManager()
                 .setPlayerProvider((con, profile) -> new Player(con,
-                        new GameProfile(UUID.nameUUIDFromBytes("OfflinePlayer:".formatted(profile.name()).getBytes()),
+                        new GameProfile(UUID.randomUUID(),
                                 profile.name())));
     }
 

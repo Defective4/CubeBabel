@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 
 import io.github.defective4.cubebabel.LibraryServer;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
+import io.github.defective4.cubebabel.util.Tuple;
 import io.github.defective4.jbabel.BabelCatalogue;
 import io.github.defective4.jbabel.BabelLibrary;
 import io.github.defective4.jbabel.Book;
@@ -51,23 +52,24 @@ public class FindBookCommand extends Command implements CommandExecutor {
         switch (mode) {
             case TITLE -> {
                 openTitleSearch(player, title -> {
-                    teleportPlayer(player, constructBookContents(title, null, null));
+                    teleportPlayer(player, constructBookContents(title, null, null), -1);
                 });
             }
             case AUTHOR -> {
                 openAuthorSearch(player, author -> {
-                    teleportPlayer(player, constructBookContents(null, author, null));
+                    teleportPlayer(player, constructBookContents(null, author, null), -1);
                 });
             }
             case CONTENT -> {
                 openContentSearch(player, content -> {
-                    teleportPlayer(player, constructBookContents(null, null, content));
+                    teleportPlayer(player, constructBookContents(null, null, content.getA()), content.getB());
                 });
             }
             case ALL -> {
                 openTitleSearch(player,
                         title -> openAuthorSearch(player, author -> openContentSearch(player, content -> {
-                            teleportPlayer(player, constructBookContents(title, author, content));
+                            teleportPlayer(player, constructBookContents(title, author, content.getA()),
+                                    content.getB());
                         })));
             }
             default -> {
@@ -96,7 +98,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
         server.getUIManager().openAnvilForResult(player, "Search by author", "Author", consumer);
     }
 
-    private void openContentSearch(Player player, Consumer<String> consumer) {
+    private void openContentSearch(Player player, Consumer<Tuple<String, Integer>> consumer) {
         server.getUIManager().openBookDialog(player, server.getHubCatalogue().getContentSearchModeBook(),
                 modeString -> {
                     ContentMode localMode;
@@ -117,29 +119,33 @@ public class FindBookCommand extends Command implements CommandExecutor {
         server.getUIManager().openAnvilForResult(player, "Search by book title", "Title", consumer);
     }
 
-    private String prepareContent(ContentMode mode, String content) {
+    private Tuple<String, Integer> prepareContent(ContentMode mode, String content) {
         StringBuilder actualContent = new StringBuilder();
+        int page = -2;
+        BabelLibrary library = server.getLibrary();
         switch (mode) {
             case PAGE -> {
                 String randomBookContent = server.getCatalogue().getRandomBook().getContent();
-                int cpp = server.getLibrary().getCharactersPerPage();
+                int cpp = library.getCharactersPerPage();
                 String pageContent = getPaddedString(content, cpp);
-                int page = server.getCatalogue().getRandom().nextInt(server.getLibrary().getPagesPerBook());
+                page = server.getCatalogue().getRandom().nextInt(library.getPagesPerBook());
                 int index = page * cpp;
                 actualContent.append(insertString(pageContent, randomBookContent, index));
             }
             case PARTIAL -> {
                 String randomBookContent = server.getCatalogue().getRandomBook().getContent();
-                int cpb = server.getLibrary().getCharactersPerBook();
+                int cpb = library.getCharactersPerBook();
+                int cpp = library.getCharactersPerPage();
                 int index = server.getCatalogue().getRandom().nextInt(cpb - content.length());
+                page = index / cpp;
                 actualContent.append(insertString(content, randomBookContent, index));
             }
             default -> actualContent.append(content);
         }
-        return actualContent.toString();
+        return new Tuple<>(actualContent.toString(), page + 1);
     }
 
-    private void teleportPlayer(Player player, Book book) {
+    private void teleportPlayer(Player player, Book book, int page) {
         BookLocation location = book.getBookLocation();
         BigInteger maxW = BigInteger.valueOf(MAX_ROOM.blockX());
         BigInteger square = maxW.multiply(BigInteger.valueOf(MAX_ROOM.blockZ()));
@@ -150,7 +156,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
         int x = room.mod(maxW).intValueExact();
 
         BlockVec center = LibraryGenerator.getRoomLocation(x, z).withBlockY(41);
-        BlockVec coordinates = server.getPlayerStorage().highlightBook(player, location, center);
+        BlockVec coordinates = server.getPlayerStorage().highlightBook(player, location, center, page);
         double xD = coordinates.blockX() + 0.5 - center.blockX() + 0.5;
         double zD = coordinates.blockZ() + 0.5 - center.blockZ() + 0.5;
         float yaw = (float) Math.toDegrees(Math.atan2(zD, xD)) - 90;

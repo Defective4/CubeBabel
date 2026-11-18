@@ -154,6 +154,10 @@ public class LibraryServer {
         HighlightedBook hl = playerStorage.getResolvedHighlightedBooks().get(player);
         if (hl != null && hl.location().equals(location)) {
             playerStorage.getResolvedHighlightedBooks().remove(player);
+            if (hl.page() >= 0) {
+                player.sendMessage(Component.text("The content you are looking for is on page %s".formatted(hl.page()))
+                        .color(LIGHT_PURPLE));
+            }
         }
         ItemStack book = bookManager.getBookFrom(location, block, instance);
 
@@ -297,7 +301,7 @@ public class LibraryServer {
 
                         if (player.isOnline()) {
                             playerStorage.resolveHighlight(player,
-                                    new HighlightedBook(blockVec, hlBook.location(), particleVec));
+                                    new HighlightedBook(blockVec, hlBook.location(), particleVec, hlBook.page()));
                         }
                         resolved.add(player);
                     }

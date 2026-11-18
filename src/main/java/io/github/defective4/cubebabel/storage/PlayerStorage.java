@@ -20,7 +20,7 @@ import net.minestom.server.instance.block.Block;
 import net.minestom.server.network.packet.server.play.BlockChangePacket;
 
 public class PlayerStorage {
-    public static record HighlightedBook(BlockVec block, BookLocation location, Point particlesLocation) {
+    public static record HighlightedBook(BlockVec block, BookLocation location, Point particlesLocation, int page) {
     }
 
     private final Map<UUID, BigInteger> dimensions = new HashMap<>();
@@ -59,9 +59,9 @@ public class PlayerStorage {
         return resolvedHighlightedBooks;
     }
 
-    public BlockVec highlightBook(Player player, BookLocation book, BlockVec center) {
+    public BlockVec highlightBook(Player player, BookLocation book, BlockVec center, int page) {
         BlockVec bookshelf = BookManager.calculateBookshelfCoordinates(center, book.wall(), book.shelf(), book.book());
-        highlightedBooks.put(player, new HighlightedBook(bookshelf, book, null));
+        highlightedBooks.put(player, new HighlightedBook(bookshelf, book, null, page));
         return bookshelf;
     }
 

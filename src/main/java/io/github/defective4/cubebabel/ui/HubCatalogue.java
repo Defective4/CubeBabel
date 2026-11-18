@@ -26,21 +26,50 @@ import net.minestom.server.item.Material;
 
 public class HubCatalogue {
 
-    private final Book catalogue;
+    private static final String CATALOGUE_KEY = "catalogue";
+    private static final String CONTENT_SEARCH_MODE_KEY = "contentSearchMode";
+    private final Book catalogue, contentSearchMode;
     private final LibraryServer server;
 
     public HubCatalogue(LibraryServer server) {
         this.server = server;
-        JsonArray root;
-        try (Reader reader = new InputStreamReader(getClass().getResourceAsStream("/ui/catalogue.json"))) {
-            root = JsonParser.parseReader(reader).getAsJsonObject().getAsJsonArray("catalogue");
+        try (Reader reader = new InputStreamReader(getClass().getResourceAsStream("/ui/books.json"))) {
+            JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+            catalogue = readBookFromArray(root.getAsJsonArray(CATALOGUE_KEY));
+            contentSearchMode = readBookFromArray(root.getAsJsonArray(CONTENT_SEARCH_MODE_KEY));
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
 
+    }
+
+    public Book getCatalogue() {
+        return catalogue;
+    }
+
+    public Book getContentSearchModeBook() {
+        return contentSearchMode;
+    }
+
+    public void initEvents() {
+        InstanceContainer hubInstance = server.getHubInstance();
+        hubInstance.eventNode().addListener(PlayerBlockInteractEvent.class, e -> {
+            e.setCancelled(true);
+            if (e.getBlock().material() == Material.LECTERN) {
+                e.getPlayer().openBook(catalogue);
+            }
+        });
+        hubInstance.eventNode().addListener(PlayerEntityInteractEvent.class, e -> {
+            if (e.getTarget().getEntityType() == EntityType.VILLAGER) {
+                e.getPlayer().openBook(catalogue);
+            }
+        });
+    }
+
+    private static Book readBookFromArray(JsonArray array) {
         List<Component> pages = new ArrayList<>();
 
-        for (JsonElement pageElement : root)
+        for (JsonElement pageElement : array)
             if (pageElement instanceof JsonArray pageArray) {
                 Component page = null;
                 for (JsonElement lineElement : pageArray) {
@@ -73,26 +102,7 @@ public class HubCatalogue {
                 pages.add(page);
             }
 
-        catalogue = Book.book(Component.text("Catalogue of Babel"), Component.text("???"), pages);
-    }
-
-    public Book getCatalogue() {
-        return catalogue;
-    }
-
-    public void initEvents() {
-        InstanceContainer hubInstance = server.getHubInstance();
-        hubInstance.eventNode().addListener(PlayerBlockInteractEvent.class, e -> {
-            e.setCancelled(true);
-            if (e.getBlock().material() == Material.LECTERN) {
-                e.getPlayer().openBook(catalogue);
-            }
-        });
-        hubInstance.eventNode().addListener(PlayerEntityInteractEvent.class, e -> {
-            if (e.getTarget().getEntityType() == EntityType.VILLAGER) {
-                e.getPlayer().openBook(catalogue);
-            }
-        });
+        return Book.book(Component.text("Catalogue of Babel"), Component.text("???"), pages);
     }
 
 }

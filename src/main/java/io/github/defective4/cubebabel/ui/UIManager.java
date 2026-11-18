@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -25,6 +26,7 @@ public class UIManager {
     private static final LegacyComponentSerializer SERIALIZER = LegacyComponentSerializer.legacySection();
 
     private final Map<Player, Consumer<String>> anvilCallbacks = new HashMap<>();
+    private final Map<Player, Consumer<String>> bookCallbacks = new HashMap<>();
     private final Map<Player, Consumer<String>> chatCallbacks = new HashMap<>();
 
     public UIManager() {
@@ -65,6 +67,7 @@ public class UIManager {
             Player player = e.getPlayer();
             anvilCallbacks.remove(player);
             chatCallbacks.remove(player);
+            bookCallbacks.remove(player);
         });
         handler.addListener(PlayerChatEvent.class, e -> {
             Player player = e.getPlayer();
@@ -81,12 +84,27 @@ public class UIManager {
         player.sendMessage(prompt);
     }
 
+    public boolean executeBookCallback(Player player, String response) {
+        if (bookCallbacks.containsKey(player)) {
+            Consumer<String> callback = bookCallbacks.get(player);
+            bookCallbacks.remove(player);
+            callback.accept(response);
+            return true;
+        }
+        return false;
+    }
+
     public void openAnvilForResult(Player player, String prompt, String initial, Consumer<String> callback) {
         anvilCallbacks.put(player, callback);
         AnvilInventory anvil = new AnvilInventory(prompt);
         anvil.setItemStack(0, ItemStack.of(Material.NAME_TAG).withCustomName(Component.text(initial)));
         anvil.setRepairCost((short) 0);
         player.openInventory(anvil);
+    }
+
+    public void openBookDialog(Player player, Book book, Consumer<String> callback) {
+        bookCallbacks.put(player, callback);
+        player.openBook(book);
     }
 
 }

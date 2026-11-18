@@ -25,6 +25,10 @@ import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.Player;
 
 public class FindBookCommand extends Command implements CommandExecutor {
+    public static enum ContentMode {
+        PAGE, PARTIAL, WHOLE
+    }
+
     public static enum FindMode {
         ALL, AUTHOR, CONTENT, TITLE
     }
@@ -93,13 +97,46 @@ public class FindBookCommand extends Command implements CommandExecutor {
     }
 
     private void openContentSearch(Player player, Consumer<String> consumer) {
-        server.getUIManager().chatPrompt(player, Component
-                .text("Enter content of the book you want to search for in the chat").color(NamedTextColor.AQUA),
-                consumer);
+        server.getUIManager().openBookDialog(player, server.getHubCatalogue().getContentSearchModeBook(),
+                modeString -> {
+                    ContentMode localMode;
+                    try {
+                        localMode = ContentMode.valueOf(modeString.toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        localMode = ContentMode.WHOLE;
+                    }
+                    ContentMode mode = localMode;
+                    server.getUIManager().chatPrompt(
+                            player, Component.text("Enter content of the book you want to search for in the chat")
+                                    .color(NamedTextColor.AQUA),
+                            content -> consumer.accept(prepareContent(mode, content)));
+                });
     }
 
     private void openTitleSearch(Player player, Consumer<String> consumer) {
         server.getUIManager().openAnvilForResult(player, "Search by book title", "Title", consumer);
+    }
+
+    private String prepareContent(ContentMode mode, String content) {
+        StringBuilder actualContent = new StringBuilder();
+        switch (mode) {
+            case PAGE -> {
+                String randomBookContent = server.getCatalogue().getRandomBook().getContent();
+                int cpp = server.getLibrary().getCharactersPerPage();
+                String pageContent = getPaddedString(content, cpp);
+                int page = server.getCatalogue().getRandom().nextInt(server.getLibrary().getPagesPerBook());
+                int index = page * cpp;
+                actualContent.append(insertString(pageContent, randomBookContent, index));
+            }
+            case PARTIAL -> {
+                String randomBookContent = server.getCatalogue().getRandomBook().getContent();
+                int cpb = server.getLibrary().getCharactersPerBook();
+                int index = server.getCatalogue().getRandom().nextInt(cpb - content.length());
+                actualContent.append(insertString(content, randomBookContent, index));
+            }
+            default -> actualContent.append(content);
+        }
+        return actualContent.toString();
     }
 
     private void teleportPlayer(Player player, Book book) {
@@ -126,6 +163,11 @@ public class FindBookCommand extends Command implements CommandExecutor {
     private static String getPaddedString(String str, int len) {
         return str.length() == len ? str
                 : str.length() > len ? str.substring(0, len) : str + " ".repeat(len - str.length());
+    }
+
+    private static String insertString(String contents, String bookContent, int index) {
+        bookContent = bookContent.substring(0, index) + contents + bookContent.substring(index + contents.length());
+        return bookContent;
     }
 
     private static String randomString(Random random, char[] charset, int len) {

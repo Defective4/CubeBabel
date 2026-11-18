@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import io.github.defective4.cubebabel.book.BookManager;
+import io.github.defective4.cubebabel.command.BookDialogCommand;
 import io.github.defective4.cubebabel.command.CenterCommand;
 import io.github.defective4.cubebabel.command.FindBookCommand;
 import io.github.defective4.cubebabel.command.GamemodeCommand;
@@ -106,14 +107,16 @@ public class LibraryServer {
         initCommands();
         initSchedulers();
 
-        MinecraftServer.getConnectionManager()
-                .setPlayerProvider((con, profile) -> new Player(con,
-                        new GameProfile(UUID.randomUUID(),
-                                profile.name())));
+        MinecraftServer.getConnectionManager().setPlayerProvider(
+                (con, profile) -> new Player(con, new GameProfile(UUID.randomUUID(), profile.name())));
     }
 
     public BabelCatalogue getCatalogue() {
         return catalogue;
+    }
+
+    public HubCatalogue getHubCatalogue() {
+        return hubCatalogue;
     }
 
     public InstanceContainer getHubInstance() {
@@ -186,6 +189,7 @@ public class LibraryServer {
         mgr.register(new CenterCommand(this));
 //        mgr.register(new DebugCommand(this));
         mgr.register(new GamemodeCommand());
+        mgr.register(new BookDialogCommand(this));
     }
 
     private void initEvents() {

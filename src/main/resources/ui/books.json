@@ -1,4 +1,30 @@
 {
+    "contentSearchMode": [
+        [
+            {
+                "text": "Content search mode",
+                "bold": true
+            },
+            "\n\n> ",
+            {
+                "text": "[Whole content]",
+                "hover": "Match a book that contains given contents ONLY",
+                "command": "bookdialog WHOLE"
+            },
+            "\n\n> ",
+            {
+                "text": "[Empty page]",
+                "hover": "Find a book that contains the contents on an empty page,\nwhile rest of the book is filled with (possible) gibberish",
+                "command": "bookdialog PAGE"
+            },
+            "\n\n> ",
+            {
+                "text": "[Partial]",
+                "hover": "Find a book that contains the text along with random stuff",
+                "command": "bookdialog PARTIAL"
+            }
+        ]
+    ],
     "catalogue": [
         [
             "Welcome to the Library of Babel catalogue\n\n",

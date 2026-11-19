@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import io.github.defective4.cubebabel.ui.inventory.OpenOptionsInventory;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -17,6 +18,7 @@ import net.minestom.server.event.inventory.InventoryPreClickEvent;
 import net.minestom.server.event.player.PlayerAnvilInputEvent;
 import net.minestom.server.event.player.PlayerChatEvent;
 import net.minestom.server.event.player.PlayerDisconnectEvent;
+import net.minestom.server.inventory.AbstractInventory;
 import net.minestom.server.inventory.type.AnvilInventory;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
@@ -45,7 +47,8 @@ public class UIManager {
         });
         handler.addListener(InventoryPreClickEvent.class, e -> {
             Player player = e.getPlayer();
-            if (player.getOpenInventory() instanceof AnvilInventory anvil && anvilCallbacks.containsKey(player)) {
+            AbstractInventory inventory = player.getOpenInventory();
+            if (inventory instanceof AnvilInventory anvil && anvilCallbacks.containsKey(player)) {
                 e.setCancelled(true);
                 if (e.getInventory() == anvil && e.getSlot() == 2) {
                     ItemStack item = anvil.getItemStack(2);
@@ -54,6 +57,16 @@ public class UIManager {
                         Consumer<String> callback = anvilCallbacks.get(player);
                         player.closeInventory();
                         callback.accept(name == null ? null : SERIALIZER.serialize(name));
+                    }
+                }
+            } else if (inventory instanceof OpenOptionsInventory ops) {
+                e.setCancelled(true);
+                if (e.getInventory() == ops) {
+                    switch (e.getSlot()) {
+                        case OpenOptionsInventory.SLOT_CANCEL -> player.closeInventory();
+                        case OpenOptionsInventory.SLOT_OPEN -> player.openBook(ops.getBook());
+                        default -> {
+                        }
                     }
                 }
             }

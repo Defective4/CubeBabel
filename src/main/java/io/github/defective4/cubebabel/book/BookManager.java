@@ -8,6 +8,7 @@ import io.github.defective4.cubebabel.LibraryServer;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import io.github.defective4.cubebabel.room.Side;
 import io.github.defective4.cubebabel.room.Sides;
+import io.github.defective4.cubebabel.ui.inventory.OpenOptionsInventory;
 import io.github.defective4.jbabel.BabelLibrary;
 import io.github.defective4.jbabel.Book;
 import io.github.defective4.jbabel.BookLocation;
@@ -182,8 +183,11 @@ public class BookManager {
             net.kyori.adventure.inventory.Book book = net.kyori.adventure.inventory.Book.builder()
                     .pages(content.pages().stream().map(ft -> ft.text()).toList())
                     .title(Component.text(content.title().text())).author(Component.text(content.author())).build();
-
-            player.openBook(book);
+            if (player.isSneaking()) {
+                player.openInventory(new OpenOptionsInventory(book));
+            } else {
+                player.openBook(book);
+            }
         }
     }
 

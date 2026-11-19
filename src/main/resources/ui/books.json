@@ -1,77 +1,85 @@
 {
-    "contentSearchMode": [
-        [
-            {
-                "text": "Content search mode",
-                "bold": true
-            },
-            "\n\n> ",
-            {
-                "text": "[Whole content]",
-                "hover": "Match a book that contains given contents ONLY",
-                "command": "bookdialog WHOLE"
-            },
-            "\n\n> ",
-            {
-                "text": "[Empty page]",
-                "hover": "Find a book that contains the contents on an empty page,\nwhile rest of the book is filled with (possible) gibberish",
-                "command": "bookdialog PAGE"
-            },
-            "\n\n> ",
-            {
-                "text": "[Partial]",
-                "hover": "Find a book that contains the text along with random stuff",
-                "command": "bookdialog PARTIAL"
-            }
+    "contentSearchMode": {
+        "title": "Search mode",
+        "author": "???",
+        "pages": [
+            [
+                {
+                    "text": "Content search mode",
+                    "bold": true
+                },
+                "\n\n> ",
+                {
+                    "text": "[Whole content]",
+                    "hover": "Match a book that contains given contents ONLY",
+                    "command": "bookdialog WHOLE"
+                },
+                "\n\n> ",
+                {
+                    "text": "[Empty page]",
+                    "hover": "Find a book that contains the contents on an empty page,\nwhile rest of the book is filled with (possible) gibberish",
+                    "command": "bookdialog PAGE"
+                },
+                "\n\n> ",
+                {
+                    "text": "[Partial]",
+                    "hover": "Find a book that contains the text along with random stuff",
+                    "command": "bookdialog PARTIAL"
+                }
+            ]
         ]
-    ],
-    "catalogue": [
-        [
-            "Welcome to the Library of Babel catalogue\n\n",
-            "> ",
-            {
-                "text": "[Find a book]",
-                "hover": "Find a book by title, author, or contents",
-                "page": 2
-            },
-            "\n\n> ",
-            {
-                "text": "[Random room]",
-                "hover": "Teleport to a random room in the library",
-                "command": "random"
-            },
-            "\n\n> ",
-            {
-                "text": "[Library center]",
-                "hover": "Teleport to the center room in the library",
-                "command": "center"
-            }
-        ],
-        [
-            {
-                "text": "Find a book",
-                "bold": true
-            },
-            "\n\n> ",
-            {
-                "text": "[By title]",
-                "command": "find TITLE"
-            },
-            "\n\n> ",
-            {
-                "text": "[By author]",
-                "command": "find AUTHOR"
-            },
-            "\n\n> ",
-            {
-                "text": "[By content]",
-                "command": "find CONTENT"
-            },
-            "\n\n> ",
-            {
-                "text": "[All of the above]",
-                "command": "find ALL"
-            }
+    },
+    "catalogue": {
+        "title": "Babel Catalogue",
+        "author": "???",
+        "pages": [
+            [
+                "Welcome to the Library of Babel catalogue\n\n",
+                "> ",
+                {
+                    "text": "[Find a book]",
+                    "hover": "Find a book by title, author, or contents",
+                    "page": 2
+                },
+                "\n\n> ",
+                {
+                    "text": "[Random room]",
+                    "hover": "Teleport to a random room in the library",
+                    "command": "random"
+                },
+                "\n\n> ",
+                {
+                    "text": "[Library center]",
+                    "hover": "Teleport to the center room in the library",
+                    "command": "center"
+                }
+            ],
+            [
+                {
+                    "text": "Find a book",
+                    "bold": true
+                },
+                "\n\n> ",
+                {
+                    "text": "[By title]",
+                    "command": "find TITLE"
+                },
+                "\n\n> ",
+                {
+                    "text": "[By author]",
+                    "command": "find AUTHOR"
+                },
+                "\n\n> ",
+                {
+                    "text": "[By content]",
+                    "command": "find CONTENT"
+                },
+                "\n\n> ",
+                {
+                    "text": "[All of the above]",
+                    "command": "find ALL"
+                }
+            ]
         ]
-    ]
+    }
 }

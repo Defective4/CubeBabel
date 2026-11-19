@@ -35,8 +35,8 @@ public class HubCatalogue {
         this.server = server;
         try (Reader reader = new InputStreamReader(getClass().getResourceAsStream("/ui/books.json"))) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-            catalogue = readBookFromArray(root.getAsJsonArray(CATALOGUE_KEY));
-            contentSearchMode = readBookFromArray(root.getAsJsonArray(CONTENT_SEARCH_MODE_KEY));
+            catalogue = readBookFromArray(root.getAsJsonObject(CATALOGUE_KEY));
+            contentSearchMode = readBookFromArray(root.getAsJsonObject(CONTENT_SEARCH_MODE_KEY));
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -66,8 +66,9 @@ public class HubCatalogue {
         });
     }
 
-    private static Book readBookFromArray(JsonArray array) {
+    private static Book readBookFromArray(JsonObject obj) {
         List<Component> pages = new ArrayList<>();
+        JsonArray array = obj.getAsJsonArray("pages");
 
         for (JsonElement pageElement : array)
             if (pageElement instanceof JsonArray pageArray) {
@@ -102,7 +103,7 @@ public class HubCatalogue {
                 pages.add(page);
             }
 
-        return Book.book(Component.text("Catalogue of Babel"), Component.text("???"), pages);
+        return Book.book(Component.text(obj.get("title").getAsString()),
+                Component.text(obj.get("author").getAsString()), pages);
     }
-
 }

@@ -1,6 +1,9 @@
 package io.github.defective4.cubebabel.ui;
 
+import static io.github.defective4.cubebabel.ui.inventory.OpenOptionsInventory.*;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -8,6 +11,7 @@ import io.github.defective4.cubebabel.LibraryServer;
 import io.github.defective4.cubebabel.ui.inventory.OpenOptionsInventory;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minestom.server.MinecraftServer;
@@ -64,10 +68,25 @@ public class UIManager {
                 e.setCancelled(true);
                 if (e.getInventory() == ops) {
                     switch (e.getSlot()) {
-                        case OpenOptionsInventory.SLOT_CANCEL -> player.closeInventory();
-                        case OpenOptionsInventory.SLOT_OPEN -> player.openBook(ops.getBook());
-                        case OpenOptionsInventory.SLOT_HIGHLIGHT ->
-                            player.openBook(server.getDictionary().highlightWords(ops.getBook()));
+                        case SLOT_CANCEL -> player.closeInventory();
+                        case SLOT_OPEN -> player.openBook(ops.getBook());
+                        case SLOT_HIGHLIGHT -> player.openBook(server.getDictionary().highlightWords(ops.getBook()));
+                        case SLOT_OPEN_PAGE -> {
+                            server.getUIManager().openAnvilForResult(player, "Page number", "1", numStr -> {
+                                Book book = ops.getBook();
+                                List<Component> pages = book.pages();
+                                int num = 0;
+                                try {
+                                    num = Integer.parseInt(numStr);
+                                    if (num < 1 || num > pages.size()) throw new NumberFormatException();
+                                } catch (NumberFormatException e2) {
+                                    player.sendMessage(Component.text("The page number you entered is invalid")
+                                            .color(NamedTextColor.RED));
+                                    return;
+                                }
+                                player.openBook(Book.book(book.title(), book.author(), List.of(pages.get(num - 1))));
+                            });
+                        }
                         default -> {
                         }
                     }

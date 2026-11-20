@@ -15,6 +15,7 @@ public class OpenOptionsInventory extends Inventory {
     public static final int SLOT_CANCEL = 8;
     public static final int SLOT_HIGHLIGHT = 1;
     public static final int SLOT_OPEN = 0;
+    public static final int SLOT_OPEN_PAGE = 2;
 
     private static final ItemStack CANCEL = ItemStack.builder(Material.BARRIER)
             .customName(Component.text("Cancel").decoration(ITALIC, false).color(RED)).build();
@@ -22,6 +23,8 @@ public class OpenOptionsInventory extends Inventory {
             .customName(Component.text("Open (highlight dictionary words)").decoration(ITALIC, false)).build();
     private static final ItemStack OPEN = ItemStack.builder(Material.BOOK)
             .customName(Component.text("Open").decoration(ITALIC, false)).build();
+    private static final ItemStack OPEN_PAGE = ItemStack.builder(Material.PAPER)
+            .customName(Component.text("Open at page").decoration(ITALIC, false)).build();
 
     private final Book book;
 
@@ -32,6 +35,7 @@ public class OpenOptionsInventory extends Inventory {
         setItemStack(SLOT_OPEN, OPEN);
         setItemStack(SLOT_CANCEL, CANCEL);
         setItemStack(SLOT_HIGHLIGHT, HIGHLIGHT);
+        setItemStack(SLOT_OPEN_PAGE, OPEN_PAGE);
     }
 
     public Book getBook() {

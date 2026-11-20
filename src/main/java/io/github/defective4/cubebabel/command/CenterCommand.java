@@ -24,12 +24,12 @@ public class CenterCommand extends Command implements CommandExecutor {
     @Override
     public void apply(CommandSender sender, CommandContext ctx) {
         Player player = (Player) sender;
-        server.getUIManager().openAnvilForResult(player, "Dimension hex", "0", str -> {
+        server.getUIManager().openAnvilForResult(player, "Dimension id", "0", str -> {
             BigInteger hex;
             try {
                 hex = new BigInteger(str, 32);
             } catch (NumberFormatException e) {
-                player.sendMessage(Component.text("Entered dimension hex is invalid").color(NamedTextColor.RED));
+                player.sendMessage(Component.text("Entered dimension id is invalid").color(NamedTextColor.RED));
                 return;
             }
             server.getPlayerStorage().setDimension(player, hex);

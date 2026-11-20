@@ -61,6 +61,12 @@
                 },
                 "\n\n> ",
                 {
+                    "text": "[Random words]",
+                    "command": "find WORDS",
+                    "hover": "Find a book containing random dictionary words"
+                },
+                "\n\n> ",
+                {
                     "text": "[By title]",
                     "command": "find TITLE"
                 },

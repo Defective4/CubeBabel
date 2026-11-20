@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.function.Consumer;
 
 import io.github.defective4.cubebabel.LibraryServer;
+import io.github.defective4.cubebabel.book.Dictionary;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
 import io.github.defective4.cubebabel.util.Tuple;
 import io.github.defective4.jbabel.BabelCatalogue;
@@ -31,7 +32,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
     }
 
     public static enum FindMode {
-        ALL, AUTHOR, CONTENT, TITLE
+        ALL, AUTHOR, CONTENT, TITLE, WORDS
     }
 
     private final ArgumentEnum<FindMode> arg = ArgumentType.Enum("mode", FindMode.class);
@@ -50,6 +51,9 @@ public class FindBookCommand extends Command implements CommandExecutor {
         FindMode mode = ctx.get(arg);
 
         switch (mode) {
+            case WORDS -> {
+                teleportPlayer(player, getRandomWordsBook(), -1);
+            }
             case TITLE -> {
                 openTitleSearch(player, title -> {
                     teleportPlayer(player, constructBookContents(title, null, null), -1);
@@ -92,6 +96,31 @@ public class FindBookCommand extends Command implements CommandExecutor {
         bookContent.append(content == null ? randomString(random, charset, len) : getPaddedString(content, len));
 
         return catalogue.findBook(bookContent.toString());
+    }
+
+    private Book getRandomWordsBook() {
+        BabelLibrary library = server.getLibrary();
+        BabelCatalogue catalogue = server.getCatalogue();
+        Random random = catalogue.getRandom();
+        Dictionary dictionary = server.getDictionary();
+
+        StringBuilder builder;
+        builder = new StringBuilder(15);
+
+        fillBuilderWithRandomWords(random, dictionary, builder);
+        String title = getPaddedString(builder.toString().trim(), 15);
+
+        builder.delete(0, builder.capacity());
+        fillBuilderWithRandomWords(random, dictionary, builder);
+        String author = builder.toString().trim();
+
+        int contentsSize = library.getCharactersPerPage() * (library.getPagesPerBook() - 1);
+        builder = new StringBuilder(contentsSize);
+        fillBuilderWithRandomWords(random, dictionary, builder);
+        String content = getPaddedString(builder.toString(), contentsSize);
+
+        String fullContent = getPaddedString(title + author, library.getCharactersPerPage()) + content;
+        return catalogue.findBook(fullContent);
     }
 
     private void openAuthorSearch(Player player, Consumer<String> consumer) {
@@ -164,6 +193,16 @@ public class FindBookCommand extends Command implements CommandExecutor {
         Pos pos = center.asPos().withYaw(yaw);
 
         LibraryServer.teleportPlayer(player, server.getLibraryInstance(), pos);
+    }
+
+    private static void fillBuilderWithRandomWords(Random random, Dictionary dictionary, StringBuilder builder) {
+        while (true) {
+            String word = dictionary.getRandomWord(random);
+            if (builder.length() + word.length() > builder.capacity()) {
+                break;
+            }
+            builder.append(word + " ");
+        }
     }
 
     private static String getPaddedString(String str, int len) {

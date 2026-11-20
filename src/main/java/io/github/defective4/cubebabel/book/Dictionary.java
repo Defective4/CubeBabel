@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -51,6 +52,10 @@ public class Dictionary {
         }
         definitions = Collections.unmodifiableMap(defintions);
         delimiters = defintions.keySet().stream().sorted((a1, a2) -> a2.length() - a1.length()).toList();
+    }
+
+    public String getRandomWord(Random rand) {
+        return delimiters.get(rand.nextInt(delimiters.size()));
     }
 
     public Future<?> highlightWords(Book book, Consumer<Book> callback, Consumer<Float> progressCallback) {

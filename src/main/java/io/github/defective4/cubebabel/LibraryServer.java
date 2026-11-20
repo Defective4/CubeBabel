@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import io.github.defective4.cubebabel.book.BookManager;
+import io.github.defective4.cubebabel.book.Dictionary;
 import io.github.defective4.cubebabel.command.BookDialogCommand;
 import io.github.defective4.cubebabel.command.CenterCommand;
 import io.github.defective4.cubebabel.command.FindBookCommand;
@@ -77,11 +78,12 @@ public class LibraryServer {
     public static final Pos SPAWN_POINT = new Pos(6.5, 67, 3.5);
     private final BookManager bookManager;
     private final BabelCatalogue catalogue;
+    private final Dictionary dictionary;
     private final HubCatalogue hubCatalogue;
+
     private final InstanceContainer hubInstance;
 
     private final BabelLibrary library;
-
     private final InstanceContainer libraryInstance;
     private final PlayerStorage playerStorage;
     private final SchematicManager schematicManager = new SchematicManager();
@@ -93,8 +95,9 @@ public class LibraryServer {
         CENTER_ROOM_LOCATION = LibraryGenerator.getRoomLocation(CENTER_ROOM.blockX(), CENTER_ROOM.blockZ());
     }
 
-    public LibraryServer(BabelLibrary library) {
+    public LibraryServer(BabelLibrary library, Dictionary dictionary) {
         this.library = Objects.requireNonNull(library);
+        this.dictionary = Objects.requireNonNull(dictionary);
         server = MinecraftServer.init();
         libraryInstance = initInstance("babel:library", new LibraryGenerator(this));
         hubInstance = initInstance("babel:hub", new HubGenerator(schematicManager.getHub(), this));
@@ -102,7 +105,7 @@ public class LibraryServer {
         catalogue = new BabelCatalogue.Builder(library).withRandomBookBits(1024 * 16).create();
         bookManager = new BookManager(this);
         hubCatalogue = new HubCatalogue(this);
-        uiManager = new UIManager();
+        uiManager = new UIManager(this);
         initEvents();
         initCommands();
         initSchedulers();
@@ -113,6 +116,10 @@ public class LibraryServer {
 
     public BabelCatalogue getCatalogue() {
         return catalogue;
+    }
+
+    public Dictionary getDictionary() {
+        return dictionary;
     }
 
     public HubCatalogue getHubCatalogue() {

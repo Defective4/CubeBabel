@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import io.github.defective4.cubebabel.LibraryServer;
 import io.github.defective4.cubebabel.ui.inventory.OpenOptionsInventory;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
@@ -31,7 +32,7 @@ public class UIManager {
     private final Map<Player, Consumer<String>> bookCallbacks = new HashMap<>();
     private final Map<Player, Consumer<String>> chatCallbacks = new HashMap<>();
 
-    public UIManager() {
+    public UIManager(LibraryServer server) {
         GlobalEventHandler handler = MinecraftServer.getGlobalEventHandler();
         handler.addListener(PlayerAnvilInputEvent.class, e -> {
             if (e.getInventory() instanceof AnvilInventory anvil) {
@@ -65,6 +66,8 @@ public class UIManager {
                     switch (e.getSlot()) {
                         case OpenOptionsInventory.SLOT_CANCEL -> player.closeInventory();
                         case OpenOptionsInventory.SLOT_OPEN -> player.openBook(ops.getBook());
+                        case OpenOptionsInventory.SLOT_HIGHLIGHT ->
+                            player.openBook(server.getDictionary().highlightWords(ops.getBook()));
                         default -> {
                         }
                     }

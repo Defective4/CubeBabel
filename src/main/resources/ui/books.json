@@ -25,6 +25,12 @@
                     "text": "[Partial]",
                     "hover": "Find a book that contains the text along with random stuff",
                     "command": "bookdialog PARTIAL"
+                },
+                "\n\n> ",
+                {
+                    "text": "[Partial (with random words)]",
+                    "hover": "Find a book that contains the text along with random words from dictionary",
+                    "command": "bookdialog WORDS"
                 }
             ]
         ]

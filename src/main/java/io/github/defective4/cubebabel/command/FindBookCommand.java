@@ -3,6 +3,8 @@ package io.github.defective4.cubebabel.command;
 import static io.github.defective4.cubebabel.LibraryServer.*;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
 
@@ -28,7 +30,7 @@ import net.minestom.server.entity.Player;
 
 public class FindBookCommand extends Command implements CommandExecutor {
     public static enum ContentMode {
-        PAGE, PARTIAL, WHOLE
+        PAGE, PARTIAL, WHOLE, WORDS
     }
 
     public static enum FindMode {
@@ -98,12 +100,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
         return catalogue.findBook(bookContent.toString());
     }
 
-    private Book getRandomWordsBook() {
-        BabelLibrary library = server.getLibrary();
-        BabelCatalogue catalogue = server.getCatalogue();
-        Random random = catalogue.getRandom();
-        Dictionary dictionary = server.getDictionary();
-
+    private String generateRandomWordTitleAuthor(Random random, Dictionary dictionary) {
         StringBuilder builder;
         builder = new StringBuilder(15);
 
@@ -114,13 +111,50 @@ public class FindBookCommand extends Command implements CommandExecutor {
         fillBuilderWithRandomWords(random, dictionary, builder);
         String author = builder.toString().trim();
 
+        return getPaddedString(title + author, server.getLibrary().getCharactersPerPage());
+    }
+
+    private Book getRandomWordsBook() {
+        BabelLibrary library = server.getLibrary();
+        BabelCatalogue catalogue = server.getCatalogue();
+        Random random = catalogue.getRandom();
+        Dictionary dictionary = server.getDictionary();
+
+        String titleAuthor = generateRandomWordTitleAuthor(random, dictionary);
+
         int contentsSize = library.getCharactersPerPage() * (library.getPagesPerBook() - 1);
-        builder = new StringBuilder(contentsSize);
+        StringBuilder builder = new StringBuilder(contentsSize);
         fillBuilderWithRandomWords(random, dictionary, builder);
         String content = getPaddedString(builder.toString(), contentsSize);
 
-        String fullContent = getPaddedString(title + author, library.getCharactersPerPage()) + content;
+        String fullContent = titleAuthor + content;
         return catalogue.findBook(fullContent);
+    }
+
+    private Tuple<String, Integer> getRandomWordsBook(String content) {
+        BabelLibrary library = server.getLibrary();
+        BabelCatalogue catalogue = server.getCatalogue();
+        Random random = catalogue.getRandom();
+        Dictionary dictionary = server.getDictionary();
+        int contentsSize = library.getCharactersPerPage() * (library.getPagesPerBook() - 1);
+        List<String> words = new ArrayList<>();
+        while (getCombinedLength(words) < contentsSize - content.length()) {
+            words.add(dictionary.getRandomWord(random));
+        }
+
+        List<String> split = List.of(content.split(" "));
+        words.addAll(random.nextInt(words.size()), split);
+        while (getCombinedLength(words) > contentsSize) {
+            words.remove(words.size() - 1);
+        }
+
+        String finalContent = String.join(" ", words.toArray(String[]::new));
+        int page = 0;
+        int index = finalContent.indexOf(content);
+        if (index >= 0) {
+            page = index / library.getCharactersPerPage();
+        }
+        return new Tuple<>(getPaddedString(finalContent, contentsSize), page);
     }
 
     private void openAuthorSearch(Player player, Consumer<String> consumer) {
@@ -169,6 +203,11 @@ public class FindBookCommand extends Command implements CommandExecutor {
                 page = index / cpp;
                 actualContent.append(insertString(content, randomBookContent, index));
             }
+            case WORDS -> {
+                Tuple<String, Integer> tuple = getRandomWordsBook(content);
+                actualContent.append(tuple.getA());
+                page = tuple.getB();
+            }
             default -> actualContent.append(content);
         }
         return new Tuple<>(actualContent.toString(), page + 1);
@@ -203,6 +242,10 @@ public class FindBookCommand extends Command implements CommandExecutor {
             }
             builder.append(word + " ");
         }
+    }
+
+    private static int getCombinedLength(List<String> words) {
+        return words.stream().mapToInt(str -> str.length() + 1).sum() - 1;
     }
 
     private static String getPaddedString(String str, int len) {

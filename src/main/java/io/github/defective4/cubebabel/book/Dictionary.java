@@ -4,34 +4,46 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.*;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class Dictionary {
+    private final Map<String, String> definitions;
+    private final List<String> delimiters;
     private final LegacyComponentSerializer serializer = LegacyComponentSerializer.legacySection();
-    private final List<String> words;
 
     public Dictionary(File file) throws IOException {
-        List<String> words;
+        Map<String, String> defintions;
         if (!file.exists()) {
-            words = List.of();
+            defintions = Map.of();
         } else {
-            words = Files.readAllLines(file.toPath());
+            try (Reader reader = new FileReader(file)) {
+                defintions = new HashMap<>();
+                for (Entry<String, JsonElement> entry : JsonParser.parseReader(reader).getAsJsonObject().entrySet()) {
+                    defintions.put(entry.getKey(), entry.getValue().getAsString());
+                }
+            }
         }
-        this.words = words.stream().sorted((a1, a2) -> a2.length() - a1.length()).toList();
-    }
-
-    public Dictionary(List<String> words) {
-        this.words = List.copyOf(words);
+        definitions = Collections.unmodifiableMap(defintions);
+        delimiters = defintions.keySet().stream().sorted((a1, a2) -> a2.length() - a1.length()).toList();
     }
 
     // TODO OPTIMIZE
@@ -40,23 +52,23 @@ public class Dictionary {
         List<Component> formatted = new ArrayList<>();
 
         for (String page : pages) {
-            List<String> split = splitWithDelimiter(page, words);
+            List<String> split = splitWithDelimiter(page, delimiters);
 
-            Component cpt = null;
+            Component cpt = Component.text("");
             for (int i = 0; i < split.size(); i++) {
                 String part = split.get(i);
                 if (part.isEmpty()) {
                     continue;
                 }
                 Component partCpt = Component.text(part);
-                boolean underlined = i % 2 == 1;
-                partCpt = partCpt.color(underlined ? DARK_RED : BLACK).decoration(UNDERLINED, underlined);
-
-                if (cpt == null) {
-                    cpt = partCpt;
+                if (i % 2 == 1) {
+                    partCpt = partCpt.color(DARK_RED).decorate(UNDERLINED)
+                            .hoverEvent(HoverEvent.showText(Component.text(definitions.getOrDefault(part, ""))));
                 } else {
-                    cpt = cpt.append(partCpt);
+                    partCpt = partCpt.color(BLACK).decoration(UNDERLINED, false);
                 }
+
+                cpt = cpt.append(partCpt);
             }
             if (cpt != null) {
                 formatted.add(cpt);

@@ -8,7 +8,11 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import io.github.defective4.cubebabel.LibraryServer;
+import io.github.defective4.cubebabel.storage.PlayerStorage;
 import io.github.defective4.cubebabel.ui.inventory.OpenOptionsInventory;
+import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.bossbar.BossBar.Color;
+import net.kyori.adventure.bossbar.BossBar.Overlay;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -70,7 +74,21 @@ public class UIManager {
                     switch (e.getSlot()) {
                         case SLOT_CANCEL -> player.closeInventory();
                         case SLOT_OPEN -> player.openBook(ops.getBook());
-                        case SLOT_HIGHLIGHT -> player.openBook(server.getDictionary().highlightWords(ops.getBook()));
+                        case SLOT_HIGHLIGHT -> {
+                            player.closeInventory();
+                            PlayerStorage storage = server.getPlayerStorage();
+                            if (storage.checkForTask(player)) {
+                                BossBar progress = BossBar.bossBar(
+                                        Component.text("Highlighting words in the book...").color(NamedTextColor.GREEN),
+                                        0f, Color.GREEN, Overlay.PROGRESS);
+                                player.showBossBar(progress);
+                                storage.putTask(player, server.getDictionary().highlightWords(ops.getBook(), book -> {
+                                    player.hideBossBar(progress);
+                                    storage.clearTask(player);
+                                    player.openBook(book);
+                                }, prog -> progress.progress(prog)));
+                            }
+                        }
                         case SLOT_OPEN_PAGE -> {
                             server.getUIManager().openAnvilForResult(player, "Page number", "1", numStr -> {
                                 Book book = ops.getBook();

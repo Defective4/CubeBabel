@@ -15,7 +15,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -24,10 +28,13 @@ import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.minestom.server.MinecraftServer;
+import net.minestom.server.timer.SchedulerManager;
 
 public class Dictionary {
     private final Map<String, String> definitions;
     private final List<String> delimiters;
+    private final ExecutorService highlighterService = Executors.newFixedThreadPool(1);
     private final LegacyComponentSerializer serializer = LegacyComponentSerializer.legacySection();
 
     public Dictionary(File file) throws IOException {
@@ -46,36 +53,41 @@ public class Dictionary {
         delimiters = defintions.keySet().stream().sorted((a1, a2) -> a2.length() - a1.length()).toList();
     }
 
-    // TODO OPTIMIZE
-    public Book highlightWords(Book book) {
-        List<String> pages = book.pages().stream().map(serializer::serialize).toList();
-        List<Component> formatted = new ArrayList<>();
+    public Future<?> highlightWords(Book book, Consumer<Book> callback, Consumer<Float> progressCallback) {
+        return highlighterService.submit(() -> {
+            List<String> pages = book.pages().stream().map(serializer::serialize).toList();
+            List<Component> formatted = new ArrayList<>();
 
-        for (String page : pages) {
-            List<String> split = splitWithDelimiter(page, delimiters);
+            int index = 0;
+            SchedulerManager scheduler = MinecraftServer.getSchedulerManager();
+            for (String page : pages) {
+                List<String> split = splitWithDelimiter(page, delimiters);
 
-            Component cpt = Component.text("");
-            for (int i = 0; i < split.size(); i++) {
-                String part = split.get(i);
-                if (part.isEmpty()) {
-                    continue;
+                Component cpt = Component.text("");
+                for (int i = 0; i < split.size(); i++) {
+                    String part = split.get(i);
+                    if (part.isEmpty()) {
+                        continue;
+                    }
+                    Component partCpt = Component.text(part);
+                    if (i % 2 == 1) {
+                        partCpt = partCpt.color(DARK_RED).decorate(UNDERLINED)
+                                .hoverEvent(HoverEvent.showText(Component.text(definitions.getOrDefault(part, ""))));
+                    } else {
+                        partCpt = partCpt.color(BLACK).decoration(UNDERLINED, false);
+                    }
+
+                    cpt = cpt.append(partCpt);
                 }
-                Component partCpt = Component.text(part);
-                if (i % 2 == 1) {
-                    partCpt = partCpt.color(DARK_RED).decorate(UNDERLINED)
-                            .hoverEvent(HoverEvent.showText(Component.text(definitions.getOrDefault(part, ""))));
-                } else {
-                    partCpt = partCpt.color(BLACK).decoration(UNDERLINED, false);
+                if (cpt != null) {
+                    formatted.add(cpt);
                 }
-
-                cpt = cpt.append(partCpt);
+                float progress = ++index / (float) pages.size();
+                scheduler.scheduleNextTick(() -> progressCallback.accept(progress));
             }
-            if (cpt != null) {
-                formatted.add(cpt);
-            }
-        }
 
-        return Book.book(book.title(), book.author(), formatted);
+            scheduler.scheduleNextTick(() -> callback.accept(Book.book(book.title(), book.author(), formatted)));
+        });
     }
 
     private static List<String> splitWithDelimiter(String text, Collection<String> delimiters) {

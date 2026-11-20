@@ -217,7 +217,7 @@ public class LibraryServer {
 
         handler.addListener(PlayerUseItemEvent.class, e -> {
             ItemStack item = e.getItemStack();
-            if (item != null && item.material() == Material.WRITTEN_BOOK) {
+            if (item != null && item.material() == Material.WRITTEN_BOOK && playerStorage.checkForTask(e.getPlayer())) {
                 BookManager.openBook(e.getPlayer(), item);
             }
         });

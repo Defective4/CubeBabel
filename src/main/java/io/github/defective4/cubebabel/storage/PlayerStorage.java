@@ -6,9 +6,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.Future;
 
 import io.github.defective4.cubebabel.book.BookManager;
 import io.github.defective4.jbabel.BookLocation;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.coordinate.Point;
@@ -25,6 +28,7 @@ public class PlayerStorage {
 
     private final Map<UUID, BigInteger> dimensions = new HashMap<>();
     private final Map<Player, HighlightedBook> highlightedBooks = new HashMap<>();
+    private final Map<Player, Future<?>> pendingTasks = new HashMap<>();
     private final Map<Player, Map<BlockVec, Block>> playerBookshelves = new HashMap<>();
     private final Map<Player, HighlightedBook> resolvedHighlightedBooks = new HashMap<>();
 
@@ -35,7 +39,23 @@ public class PlayerStorage {
             highlightedBooks.remove(player);
             playerBookshelves.remove(player);
             resolvedHighlightedBooks.remove(player);
+            pendingTasks.remove(player);
         });
+    }
+
+    public boolean checkForTask(Player player) {
+        if (hasTask(player)) {
+            player.sendMessage(
+                    Component.text("You already have a task running in background.").color(NamedTextColor.RED));
+            return false;
+        }
+        return true;
+    }
+
+    public void clearTask(Player player) {
+        synchronized (pendingTasks) {
+            pendingTasks.remove(player);
+        }
     }
 
     public Block getBookshelf(Player player, BlockVec pos) {
@@ -59,6 +79,12 @@ public class PlayerStorage {
         return resolvedHighlightedBooks;
     }
 
+    public boolean hasTask(Player player) {
+        synchronized (pendingTasks) {
+            return pendingTasks.containsKey(player);
+        }
+    }
+
     public BlockVec highlightBook(Player player, BookLocation book, BlockVec center, int page) {
         BlockVec bookshelf = BookManager.calculateBookshelfCoordinates(center, book.wall(), book.shelf(), book.book());
         highlightedBooks.put(player, new HighlightedBook(bookshelf, book, null, page));
@@ -75,6 +101,12 @@ public class PlayerStorage {
             }
         map.remove(pos);
         clean(player, map);
+    }
+
+    public void putTask(Player key, Future<?> value) {
+        synchronized (pendingTasks) {
+            pendingTasks.put(key, value);
+        }
     }
 
     public void removeBookshelves(Player player) {

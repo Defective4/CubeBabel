@@ -7,8 +7,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
@@ -25,36 +27,29 @@ public class Dictionary {
         } else {
             words = Files.readAllLines(file.toPath());
         }
-        this.words = words;
+        this.words = words.stream().sorted((a1, a2) -> a2.length() - a1.length()).toList();
     }
 
     public Dictionary(List<String> words) {
         this.words = List.copyOf(words);
     }
 
+    // TODO OPTIMIZE
     public Book highlightWords(Book book) {
         List<String> pages = book.pages().stream().map(serializer::serialize).toList();
         List<Component> formatted = new ArrayList<>();
 
         for (String page : pages) {
-            List<String> split = new ArrayList<>();
-            split.add(page);
-
-            for (String word : words) {
-                List<String> splitCopy = List.copyOf(split);
-                split.clear();
-                for (String part : splitCopy) {
-                    Collections.addAll(split, part.splitWithDelimiters(word, 0));
-                }
-            }
+            List<String> split = splitWithDelimiter(page, words);
 
             Component cpt = null;
-            for (String part : split) {
+            for (int i = 0; i < split.size(); i++) {
+                String part = split.get(i);
                 if (part.isEmpty()) {
                     continue;
                 }
                 Component partCpt = Component.text(part);
-                boolean underlined = words.contains(part);
+                boolean underlined = i % 2 == 1;
                 partCpt = partCpt.color(underlined ? DARK_RED : BLACK).decoration(UNDERLINED, underlined);
 
                 if (cpt == null) {
@@ -69,6 +64,28 @@ public class Dictionary {
         }
 
         return Book.book(book.title(), book.author(), formatted);
+    }
+
+    private static List<String> splitWithDelimiter(String text, Collection<String> delimiters) {
+        AtomicReference<String> textRef = new AtomicReference<>(text);
+        List<String> parts = new ArrayList<>();
+        while (true) {
+            Optional<String> opt = delimiters.stream().filter(textRef.get()::contains).min((a1, a2) -> {
+                String txt = textRef.get();
+                return txt.indexOf(a1) - txt.indexOf(a2);
+            });
+            if (!opt.isPresent()) {
+                parts.add(textRef.get());
+                break;
+            }
+            String delimiter = opt.get();
+            String currentText = textRef.get();
+            int index = currentText.indexOf(delimiter);
+            parts.add(currentText.substring(0, index));
+            textRef.set(textRef.get().substring(index + delimiter.length()));
+            parts.add(delimiter);
+        }
+        return parts;
     }
 
 }

@@ -76,13 +76,14 @@ public class LibraryServer {
     public static final BlockVec CENTER_ROOM_LOCATION;
     public static final BlockVec MAX_ROOM = new BlockVec(2727270, 2142855);
     public static final Pos SPAWN_POINT = new Pos(6.5, 67, 3.5);
+    private static LibraryServer INSTANCE;
     private final BookManager bookManager;
     private final BabelCatalogue catalogue;
     private final Dictionary dictionary;
+
     private final HubCatalogue hubCatalogue;
 
     private final InstanceContainer hubInstance;
-
     private final BabelLibrary library;
     private final InstanceContainer libraryInstance;
     private final PlayerStorage playerStorage;
@@ -96,16 +97,18 @@ public class LibraryServer {
     }
 
     public LibraryServer(BabelLibrary library, Dictionary dictionary) {
+        if (INSTANCE != null) throw new IllegalStateException("Only one library server instance is allowed at a time");
+        INSTANCE = this;
         this.library = Objects.requireNonNull(library);
         this.dictionary = Objects.requireNonNull(dictionary);
         server = MinecraftServer.init();
-        libraryInstance = initInstance("babel:library", new LibraryGenerator(this));
-        hubInstance = initInstance("babel:hub", new HubGenerator(schematicManager.getHub(), this));
+        libraryInstance = initInstance("babel:library", new LibraryGenerator());
+        hubInstance = initInstance("babel:hub", new HubGenerator(schematicManager.getHub()));
         playerStorage = new PlayerStorage();
         catalogue = new BabelCatalogue.Builder(library).withRandomBookBits(1024 * 16).create();
-        bookManager = new BookManager(this);
-        hubCatalogue = new HubCatalogue(this);
-        uiManager = new UIManager(this);
+        bookManager = new BookManager();
+        hubCatalogue = new HubCatalogue();
+        uiManager = new UIManager();
         initEvents();
         initCommands();
         initSchedulers();
@@ -189,18 +192,6 @@ public class LibraryServer {
                 sendLabel(player, bookContent);
             }
         }
-    }
-
-    private void initCommands() {
-        CommandManager mgr = MinecraftServer.getCommandManager();
-
-        mgr.register(new RandomBookCommand(this));
-        mgr.register(new SpawnCommand(this));
-        mgr.register(new FindBookCommand(this));
-        mgr.register(new CenterCommand(this));
-//        mgr.register(new DebugCommand(this));
-        mgr.register(new GamemodeCommand());
-        mgr.register(new BookDialogCommand(this));
     }
 
     private void initEvents() {
@@ -344,12 +335,28 @@ public class LibraryServer {
         }, TaskSchedule.immediate(), TaskSchedule.tick(5));
     }
 
+    public static LibraryServer getInstance() {
+        return INSTANCE;
+    }
+
     public static void teleportPlayer(Player player, InstanceContainer instance, Pos target) {
         if (player.getInstance() == instance) {
             player.teleport(target);
         } else {
             player.setInstance(instance, target);
         }
+    }
+
+    private static void initCommands() {
+        CommandManager mgr = MinecraftServer.getCommandManager();
+
+        mgr.register(new RandomBookCommand());
+        mgr.register(new SpawnCommand());
+        mgr.register(new FindBookCommand());
+        mgr.register(new CenterCommand());
+//        mgr.register(new DebugCommand(this));
+        mgr.register(new GamemodeCommand());
+        mgr.register(new BookDialogCommand());
     }
 
     private static InstanceContainer initInstance(String dimension, Generator generator) {

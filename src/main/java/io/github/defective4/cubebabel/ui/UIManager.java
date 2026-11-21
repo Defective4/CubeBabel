@@ -45,10 +45,9 @@ public class UIManager {
     private final Map<Player, Consumer<String>> anvilCallbacks = new HashMap<>();
     private final Map<Player, Consumer<String>> bookCallbacks = new HashMap<>();
     private final Map<Player, Consumer<String>> chatCallbacks = new HashMap<>();
-    private final LibraryServer server;
 
-    public UIManager(LibraryServer server) {
-        this.server = server;
+    public UIManager() {
+        LibraryServer server = LibraryServer.getInstance();
         GlobalEventHandler handler = MinecraftServer.getGlobalEventHandler();
         handler.addListener(PlayerAnvilInputEvent.class, e -> {
             if (e.getInventory() instanceof AnvilInventory anvil) {
@@ -172,7 +171,7 @@ public class UIManager {
     public void openAnvilForResult(Player player, String prompt, String initial, Consumer<String> callback,
             RandomType randomType) {
         anvilCallbacks.put(player, callback);
-        AnvilInventory anvil = new AnvilDialogInventory(prompt, initial, randomType, server);
+        AnvilInventory anvil = new AnvilDialogInventory(prompt, initial, randomType);
         player.openInventory(anvil);
     }
 

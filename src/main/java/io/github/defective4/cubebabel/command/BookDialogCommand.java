@@ -12,11 +12,9 @@ import net.minestom.server.entity.Player;
 public class BookDialogCommand extends Command implements CommandExecutor {
 
     private final ArgumentString response;
-    private final LibraryServer server;
 
-    public BookDialogCommand(LibraryServer server) {
+    public BookDialogCommand() {
         super("bookdialog");
-        this.server = server;
 
         response = ArgumentType.String("response");
         addSyntax(this, response);
@@ -25,7 +23,7 @@ public class BookDialogCommand extends Command implements CommandExecutor {
     @Override
     public void apply(CommandSender sender, CommandContext ctx) {
         String response = ctx.get(this.response);
-        server.getUIManager().executeBookCallback((Player) sender, response);
+        LibraryServer.getInstance().getUIManager().executeBookCallback((Player) sender, response);
     }
 
 }

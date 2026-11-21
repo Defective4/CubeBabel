@@ -18,11 +18,9 @@ import net.minestom.server.instance.generator.Generator;
 public class HubGenerator implements Generator {
 
     private final Schematic hub;
-    private final LibraryServer server;
 
-    public HubGenerator(Schematic hub, LibraryServer server) {
+    public HubGenerator(Schematic hub) {
         this.hub = hub;
-        this.server = server;
     }
 
     @Override
@@ -51,7 +49,7 @@ public class HubGenerator implements Generator {
                     .withPitch(def.rotation().pitch());
             if (location.sameChunk(unit.absoluteStart())) {
                 Entity entity = new Entity(EntityType.fromKey(def.id()));
-                entity.setInstance(server.getHubInstance(), location);
+                entity.setInstance(LibraryServer.getInstance().getHubInstance(), location);
             }
         }
     }

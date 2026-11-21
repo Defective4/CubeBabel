@@ -39,11 +39,9 @@ public class FindBookCommand extends Command implements CommandExecutor {
     }
 
     private final ArgumentEnum<FindMode> arg = ArgumentType.Enum("mode", FindMode.class);
-    private final LibraryServer server;
 
-    public FindBookCommand(LibraryServer server) {
+    public FindBookCommand() {
         super("find");
-        this.server = server;
 
         addSyntax(this, arg);
     }
@@ -84,7 +82,18 @@ public class FindBookCommand extends Command implements CommandExecutor {
         }
     }
 
-    private Book constructBookContents(String title, String author, String content) {
+    public static void fillBuilderWithRandomWords(Random random, Dictionary dictionary, StringBuilder builder) {
+        while (true) {
+            String word = dictionary.getRandomWord(random);
+            if (builder.length() + word.length() > builder.capacity()) {
+                break;
+            }
+            builder.append(word + " ");
+        }
+    }
+
+    private static Book constructBookContents(String title, String author, String content) {
+        LibraryServer server = LibraryServer.getInstance();
         BabelCatalogue catalogue = server.getCatalogue();
         BabelLibrary library = server.getLibrary();
 
@@ -101,7 +110,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
         return catalogue.findBook(bookContent.toString());
     }
 
-    private String generateRandomWordTitleAuthor(Random random, Dictionary dictionary) {
+    private static String generateRandomWordTitleAuthor(Random random, Dictionary dictionary) {
         StringBuilder builder;
         builder = new StringBuilder(15);
 
@@ -112,10 +121,20 @@ public class FindBookCommand extends Command implements CommandExecutor {
         fillBuilderWithRandomWords(random, dictionary, builder);
         String author = builder.toString().trim();
 
-        return getPaddedString(title + author, server.getLibrary().getCharactersPerPage());
+        return getPaddedString(title + author, LibraryServer.getInstance().getLibrary().getCharactersPerPage());
     }
 
-    private Book getRandomWordsBook() {
+    private static int getCombinedLength(List<String> words) {
+        return words.stream().mapToInt(str -> str.length() + 1).sum() - 1;
+    }
+
+    private static String getPaddedString(String str, int len) {
+        return str.length() == len ? str
+                : str.length() > len ? str.substring(0, len) : str + " ".repeat(len - str.length());
+    }
+
+    private static Book getRandomWordsBook() {
+        LibraryServer server = LibraryServer.getInstance();
         BabelLibrary library = server.getLibrary();
         BabelCatalogue catalogue = server.getCatalogue();
         Random random = catalogue.getRandom();
@@ -132,7 +151,8 @@ public class FindBookCommand extends Command implements CommandExecutor {
         return catalogue.findBook(fullContent);
     }
 
-    private Tuple<String, Integer> getRandomWordsBook(String content) {
+    private static Tuple<String, Integer> getRandomWordsBook(String content) {
+        LibraryServer server = LibraryServer.getInstance();
         BabelLibrary library = server.getLibrary();
         BabelCatalogue catalogue = server.getCatalogue();
         Random random = catalogue.getRandom();
@@ -158,11 +178,18 @@ public class FindBookCommand extends Command implements CommandExecutor {
         return new Tuple<>(getPaddedString(finalContent, contentsSize), page);
     }
 
-    private void openAuthorSearch(Player player, Consumer<String> consumer) {
-        server.getUIManager().openAnvilForResult(player, "Search by author", "Author", consumer, RandomType.TITLE);
+    private static String insertString(String contents, String bookContent, int index) {
+        bookContent = bookContent.substring(0, index) + contents + bookContent.substring(index + contents.length());
+        return bookContent;
     }
 
-    private void openContentSearch(Player player, Consumer<Tuple<String, Integer>> consumer) {
+    private static void openAuthorSearch(Player player, Consumer<String> consumer) {
+        LibraryServer.getInstance().getUIManager().openAnvilForResult(player, "Search by author", "Author", consumer,
+                RandomType.TITLE);
+    }
+
+    private static void openContentSearch(Player player, Consumer<Tuple<String, Integer>> consumer) {
+        LibraryServer server = LibraryServer.getInstance();
         server.getUIManager().openBookDialog(player, server.getHubCatalogue().getContentSearchModeBook(),
                 modeString -> {
                     ContentMode localMode;
@@ -179,11 +206,13 @@ public class FindBookCommand extends Command implements CommandExecutor {
                 });
     }
 
-    private void openTitleSearch(Player player, Consumer<String> consumer) {
-        server.getUIManager().openAnvilForResult(player, "Search by book title", "Title", consumer, RandomType.TITLE);
+    private static void openTitleSearch(Player player, Consumer<String> consumer) {
+        LibraryServer.getInstance().getUIManager().openAnvilForResult(player, "Search by book title", "Title", consumer,
+                RandomType.TITLE);
     }
 
-    private Tuple<String, Integer> prepareContent(ContentMode mode, String content) {
+    private static Tuple<String, Integer> prepareContent(ContentMode mode, String content) {
+        LibraryServer server = LibraryServer.getInstance();
         StringBuilder actualContent = new StringBuilder();
         int page = -2;
         BabelLibrary library = server.getLibrary();
@@ -214,7 +243,16 @@ public class FindBookCommand extends Command implements CommandExecutor {
         return new Tuple<>(actualContent.toString(), page + 1);
     }
 
-    private void teleportPlayer(Player player, Book book, int page) {
+    private static String randomString(Random random, char[] charset, int len) {
+        StringBuilder builder = new StringBuilder(len);
+        for (int i = 0; i < len; i++) {
+            builder.append(charset[random.nextInt(charset.length)]);
+        }
+        return builder.toString();
+    }
+
+    private static void teleportPlayer(Player player, Book book, int page) {
+        LibraryServer server = LibraryServer.getInstance();
         BookLocation location = book.getBookLocation();
         BigInteger maxW = BigInteger.valueOf(MAX_ROOM.blockX());
         BigInteger square = maxW.multiply(BigInteger.valueOf(MAX_ROOM.blockZ()));
@@ -233,38 +271,6 @@ public class FindBookCommand extends Command implements CommandExecutor {
         Pos pos = center.asPos().withYaw(yaw);
 
         LibraryServer.teleportPlayer(player, server.getLibraryInstance(), pos);
-    }
-
-    public static void fillBuilderWithRandomWords(Random random, Dictionary dictionary, StringBuilder builder) {
-        while (true) {
-            String word = dictionary.getRandomWord(random);
-            if (builder.length() + word.length() > builder.capacity()) {
-                break;
-            }
-            builder.append(word + " ");
-        }
-    }
-
-    private static int getCombinedLength(List<String> words) {
-        return words.stream().mapToInt(str -> str.length() + 1).sum() - 1;
-    }
-
-    private static String getPaddedString(String str, int len) {
-        return str.length() == len ? str
-                : str.length() > len ? str.substring(0, len) : str + " ".repeat(len - str.length());
-    }
-
-    private static String insertString(String contents, String bookContent, int index) {
-        bookContent = bookContent.substring(0, index) + contents + bookContent.substring(index + contents.length());
-        return bookContent;
-    }
-
-    private static String randomString(Random random, char[] charset, int len) {
-        StringBuilder builder = new StringBuilder(len);
-        for (int i = 0; i < len; i++) {
-            builder.append(charset[random.nextInt(charset.length)]);
-        }
-        return builder.toString();
     }
 
 }

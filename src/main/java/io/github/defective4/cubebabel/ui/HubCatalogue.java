@@ -29,10 +29,8 @@ public class HubCatalogue {
     private static final String CATALOGUE_KEY = "catalogue";
     private static final String CONTENT_SEARCH_MODE_KEY = "contentSearchMode";
     private final Book catalogue, contentSearchMode;
-    private final LibraryServer server;
 
-    public HubCatalogue(LibraryServer server) {
-        this.server = server;
+    public HubCatalogue() {
         try (Reader reader = new InputStreamReader(getClass().getResourceAsStream("/ui/books.json"))) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
             catalogue = readBookFromArray(root.getAsJsonObject(CATALOGUE_KEY));
@@ -52,7 +50,7 @@ public class HubCatalogue {
     }
 
     public void initEvents() {
-        InstanceContainer hubInstance = server.getHubInstance();
+        InstanceContainer hubInstance = LibraryServer.getInstance().getHubInstance();
         hubInstance.eventNode().addListener(PlayerBlockInteractEvent.class, e -> {
             e.setCancelled(true);
             if (e.getBlock().material() == Material.LECTERN) {

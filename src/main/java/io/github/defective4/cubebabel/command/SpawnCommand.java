@@ -11,18 +11,15 @@ import net.minestom.server.entity.Player;
 
 public class SpawnCommand extends Command implements CommandExecutor {
 
-    private final LibraryServer server;
-
-    public SpawnCommand(LibraryServer server) {
+    public SpawnCommand() {
         super("spawn");
-        this.server = server;
         setDefaultExecutor(this);
     }
 
     @Override
     public void apply(CommandSender sender, CommandContext ctx) {
         Player player = (Player) sender;
-        LibraryServer.teleportPlayer(player, server.getHubInstance(), LibraryServer.SPAWN_POINT);
+        LibraryServer.teleportPlayer(player, LibraryServer.getInstance().getHubInstance(), LibraryServer.SPAWN_POINT);
         player.sendMessage(Component.text("Teleported to spawn").color(NamedTextColor.GREEN));
     }
 }

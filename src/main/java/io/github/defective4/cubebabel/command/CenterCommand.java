@@ -14,17 +14,15 @@ import net.minestom.server.entity.Player;
 
 public class CenterCommand extends Command implements CommandExecutor {
 
-    private final LibraryServer server;
-
-    public CenterCommand(LibraryServer server) {
+    public CenterCommand() {
         super("center");
-        this.server = server;
         setDefaultExecutor(this);
     }
 
     @Override
     public void apply(CommandSender sender, CommandContext ctx) {
         Player player = (Player) sender;
+        LibraryServer server = LibraryServer.getInstance();
         server.getUIManager().openAnvilForResult(player, "Dimension id", "0", str -> {
             BigInteger hex;
             try {

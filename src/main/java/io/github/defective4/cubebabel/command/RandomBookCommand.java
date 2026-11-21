@@ -20,16 +20,14 @@ import net.minestom.server.entity.Player;
 
 public class RandomBookCommand extends Command implements CommandExecutor {
 
-    private final LibraryServer server;
-
-    public RandomBookCommand(LibraryServer server) {
-        this.server = server;
+    public RandomBookCommand() {
         super("random");
         setDefaultExecutor(this);
     }
 
     @Override
     public void apply(CommandSender sender, CommandContext ctx) {
+        LibraryServer server = LibraryServer.getInstance();
         Player player = (Player) sender;
         player.sendMessage(Component.text("Preparing for teleport...").color(NamedTextColor.YELLOW));
         BabelCatalogue catalogue = server.getCatalogue();

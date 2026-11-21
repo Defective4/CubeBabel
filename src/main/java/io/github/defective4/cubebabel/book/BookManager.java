@@ -26,14 +26,9 @@ import net.minestom.server.item.component.WrittenBookContent;
 
 public class BookManager {
     private static final String BOOKSHELF_SLOT = "slot_%s_occupied";
-    private final LibraryServer server;
-
-    public BookManager(LibraryServer server) {
-        this.server = server;
-    }
 
     public ItemStack getBookFrom(BookLocation location, Block block, Instance instance) {
-
+        LibraryServer server = LibraryServer.getInstance();
         Book babelBook = server.getCatalogue().getBookAt(location);
         BabelLibrary library = server.getLibrary();
 

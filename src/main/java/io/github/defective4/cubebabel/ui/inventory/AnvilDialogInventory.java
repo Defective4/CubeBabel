@@ -44,13 +44,11 @@ public class AnvilDialogInventory extends AnvilInventory {
     private RandomTitleMode randomTitleMode = RandomTitleMode.RANDOM;
     private int randomTitleModeIndex = 0;
     private final RandomType randType;
-    private final LibraryServer server;
 
-    public AnvilDialogInventory(String title, String initial, RandomType randomType, LibraryServer server) {
+    public AnvilDialogInventory(String title, String initial, RandomType randomType) {
         super(title);
         randType = randomType;
         input = ItemStack.of(Material.NAME_TAG).withCustomName(Component.text(initial).decoration(ITALIC, false));
-        this.server = server;
         setItemStack(0, input);
         ItemStack randomizer = createRandomizer();
         setItemStack(1, randomizer);
@@ -58,6 +56,7 @@ public class AnvilDialogInventory extends AnvilInventory {
     }
 
     public void randomize() {
+        LibraryServer server = LibraryServer.getInstance();
         String newValue = switch (randType) {
             case DIMENSION -> new BigInteger(HEX_RANDOM_BITS, random).toString(32);
             case TITLE -> switch (randomTitleMode) {

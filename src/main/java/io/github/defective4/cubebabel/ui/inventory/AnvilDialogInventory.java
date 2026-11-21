@@ -37,6 +37,8 @@ public class AnvilDialogInventory extends AnvilInventory {
         }
     }
 
+    private static final int HEX_RANDOM_BITS = 85;
+
     private final ItemStack input;
     private final Random random = new Random();
     private RandomTitleMode randomTitleMode = RandomTitleMode.RANDOM;
@@ -57,7 +59,7 @@ public class AnvilDialogInventory extends AnvilInventory {
 
     public void randomize() {
         String newValue = switch (randType) {
-            case DIMENSION -> new BigInteger(242, random).toString(32);
+            case DIMENSION -> new BigInteger(HEX_RANDOM_BITS, random).toString(32);
             case TITLE -> switch (randomTitleMode) {
                 case RANDOM -> {
                     char[] charset = server.getLibrary().getChars();

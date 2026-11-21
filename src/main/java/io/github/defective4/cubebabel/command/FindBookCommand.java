@@ -5,6 +5,7 @@ import static io.github.defective4.cubebabel.LibraryServer.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.function.Consumer;
 
@@ -53,7 +54,12 @@ public class FindBookCommand extends Command implements CommandExecutor {
 
         switch (mode) {
             case WORDS -> {
-                teleportPlayer(player, getRandomWordsBook(), -1);
+                Optional<Book> opt = getRandomWordsBook();
+                if (opt.isPresent()) {
+                    teleportPlayer(player, opt.get(), -1);
+                } else {
+                    sender.sendMessage(Component.text("The dictionary is not available").color(NamedTextColor.RED));
+                }
             }
             case TITLE -> {
                 openTitleSearch(player, title -> {
@@ -133,12 +139,14 @@ public class FindBookCommand extends Command implements CommandExecutor {
                 : str.length() > len ? str.substring(0, len) : str + " ".repeat(len - str.length());
     }
 
-    private static Book getRandomWordsBook() {
+    private static Optional<Book> getRandomWordsBook() {
         LibraryServer server = LibraryServer.getInstance();
         BabelLibrary library = server.getLibrary();
         BabelCatalogue catalogue = server.getCatalogue();
         Random random = catalogue.getRandom();
-        Dictionary dictionary = server.getDictionary();
+        Optional<Dictionary> dictionaryOpt = server.getDictionary();
+        if (dictionaryOpt.isEmpty()) return Optional.empty();
+        Dictionary dictionary = dictionaryOpt.get();
 
         String titleAuthor = generateRandomWordTitleAuthor(random, dictionary);
 
@@ -148,15 +156,17 @@ public class FindBookCommand extends Command implements CommandExecutor {
         String content = getPaddedString(builder.toString(), contentsSize);
 
         String fullContent = titleAuthor + content;
-        return catalogue.findBook(fullContent);
+        return Optional.of(catalogue.findBook(fullContent));
     }
 
-    private static Tuple<String, Integer> getRandomWordsBook(String content) {
+    private static Optional<Tuple<String, Integer>> getRandomWordsBook(String content) {
         LibraryServer server = LibraryServer.getInstance();
         BabelLibrary library = server.getLibrary();
         BabelCatalogue catalogue = server.getCatalogue();
         Random random = catalogue.getRandom();
-        Dictionary dictionary = server.getDictionary();
+        Optional<Dictionary> dictionaryOpt = server.getDictionary();
+        if (dictionaryOpt.isEmpty()) return Optional.empty();
+        Dictionary dictionary = dictionaryOpt.get();
         int contentsSize = library.getCharactersPerPage() * (library.getPagesPerBook() - 1);
         List<String> words = new ArrayList<>();
         while (getCombinedLength(words) < contentsSize - content.length()) {
@@ -175,7 +185,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
         if (index >= 0) {
             page = index / library.getCharactersPerPage();
         }
-        return new Tuple<>(getPaddedString(finalContent, contentsSize), page);
+        return Optional.of(new Tuple<>(getPaddedString(finalContent, contentsSize), page));
     }
 
     private static String insertString(String contents, String bookContent, int index) {
@@ -234,9 +244,12 @@ public class FindBookCommand extends Command implements CommandExecutor {
                 actualContent.append(insertString(content, randomBookContent, index));
             }
             case WORDS -> {
-                Tuple<String, Integer> tuple = getRandomWordsBook(content);
-                actualContent.append(tuple.getA());
-                page = tuple.getB();
+                Optional<Tuple<String, Integer>> opt = getRandomWordsBook(content);
+                if (opt.isPresent()) {
+                    Tuple<String, Integer> tuple = opt.get();
+                    actualContent.append(tuple.getA());
+                    page = tuple.getB();
+                }
             }
             default -> actualContent.append(content);
         }

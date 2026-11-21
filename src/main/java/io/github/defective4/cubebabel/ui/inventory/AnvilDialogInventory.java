@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Random;
 
 import io.github.defective4.cubebabel.LibraryServer;
+import io.github.defective4.cubebabel.book.Condition;
 import io.github.defective4.cubebabel.command.FindBookCommand;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.inventory.type.AnvilInventory;
@@ -70,7 +71,9 @@ public class AnvilDialogInventory extends AnvilInventory {
                 }
                 case WORDS -> {
                     StringBuilder builder = new StringBuilder(15);
-                    FindBookCommand.fillBuilderWithRandomWords(random, server.getDictionary(), builder);
+                    server.getDictionary().ifPresent(dictionary -> {
+                        FindBookCommand.fillBuilderWithRandomWords(random, dictionary, builder);
+                    });
                     yield builder.toString().trim();
                 }
                 default -> null;
@@ -84,7 +87,11 @@ public class AnvilDialogInventory extends AnvilInventory {
     public void switchRandomMode() {
         randomTitleModeIndex = (randomTitleModeIndex + 1) % RandomTitleMode.values().length;
         randomTitleMode = RandomTitleMode.values()[randomTitleModeIndex];
-        setItemStack(1, createRandomizer());
+        if (randomTitleMode == RandomTitleMode.WORDS && !Condition.HAS_DICTIONARY.isTrue()) {
+            switchRandomMode();
+        } else {
+            setItemStack(1, createRandomizer());
+        }
     }
 
     private ItemStack createRandomizer() {
@@ -95,8 +102,12 @@ public class AnvilDialogInventory extends AnvilInventory {
         if (randType == RandomType.TITLE) {
             for (RandomTitleMode mode : RandomTitleMode.values()) {
                 boolean selected = mode == randomTitleMode;
-                lore.add(Component.text("> ").color(DARK_GRAY).decoration(ITALIC, false).append(Component
-                        .text(mode.friendlyName).color(selected ? GRAY : DARK_GRAY).decoration(UNDERLINED, selected)));
+                Component cpt = Component.text(mode.friendlyName).color(selected ? GRAY : DARK_GRAY)
+                        .decoration(UNDERLINED, selected);
+                if (mode == RandomTitleMode.WORDS && !Condition.HAS_DICTIONARY.isTrue()) {
+                    cpt = cpt.color(RED).decorate(STRIKETHROUGH);
+                }
+                lore.add(Component.text("> ").color(DARK_GRAY).decoration(ITALIC, false).append(cpt));
             }
             lore.add(Component.text(""));
             lore.add(Component.text("[RMB] to switch modes").decoration(ITALIC, false).color(YELLOW));

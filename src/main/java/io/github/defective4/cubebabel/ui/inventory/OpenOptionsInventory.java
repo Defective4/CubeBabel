@@ -3,6 +3,7 @@ package io.github.defective4.cubebabel.ui.inventory;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.*;
 
+import io.github.defective4.cubebabel.book.Condition;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.inventory.Inventory;
@@ -34,7 +35,9 @@ public class OpenOptionsInventory extends Inventory {
 
         setItemStack(SLOT_OPEN, OPEN);
         setItemStack(SLOT_CANCEL, CANCEL);
-        setItemStack(SLOT_HIGHLIGHT, HIGHLIGHT);
+        if (Condition.HAS_DICTIONARY.isTrue()) {
+            setItemStack(SLOT_HIGHLIGHT, HIGHLIGHT);
+        }
         setItemStack(SLOT_OPEN_PAGE, OPEN_PAGE);
     }
 

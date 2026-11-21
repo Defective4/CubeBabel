@@ -26,8 +26,12 @@
                     "hover": "Find a book that contains the text along with random stuff",
                     "command": "bookdialog PARTIAL"
                 },
-                "\n\n> ",
                 {
+                    "condition": "HAS_DICTIONARY",
+                    "text": "\n\n> "
+                },
+                {
+                    "condition": "HAS_DICTIONARY",
                     "text": "[With random words]",
                     "hover": "Find a book that contains the text along with random words from dictionary",
                     "command": "bookdialog WORDS"
@@ -85,8 +89,12 @@
                     "text": "[All of the above]",
                     "command": "find ALL"
                 },
-                "\n\n> ",
                 {
+                    "condition": "HAS_DICTIONARY",
+                    "text": "\n\n> "
+                },
+                {
+                    "condition": "HAS_DICTIONARY",
                     "text": "[Random words]",
                     "command": "find WORDS",
                     "hover": "Find a book containing random dictionary words"

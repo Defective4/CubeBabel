@@ -96,19 +96,21 @@ public class UIManager {
                         case SLOT_CANCEL -> player.closeInventory();
                         case SLOT_OPEN -> player.openBook(ops.getBook());
                         case SLOT_HIGHLIGHT -> {
-                            player.closeInventory();
-                            PlayerStorage storage = server.getPlayerStorage();
-                            if (storage.checkForTask(player)) {
-                                BossBar progress = BossBar.bossBar(
-                                        Component.text("Highlighting words in the book...").color(NamedTextColor.GREEN),
-                                        0f, Color.GREEN, Overlay.PROGRESS);
-                                player.showBossBar(progress);
-                                storage.putTask(player, server.getDictionary().highlightWords(ops.getBook(), book -> {
-                                    player.hideBossBar(progress);
-                                    storage.clearTask(player);
-                                    player.openBook(book);
-                                }, prog -> progress.progress(prog)));
-                            }
+                            server.getDictionary().ifPresent(dictionary -> {
+                                player.closeInventory();
+                                PlayerStorage storage = server.getPlayerStorage();
+                                if (storage.checkForTask(player)) {
+                                    BossBar progress = BossBar.bossBar(Component
+                                            .text("Highlighting words in the book...").color(NamedTextColor.GREEN), 0f,
+                                            Color.GREEN, Overlay.PROGRESS);
+                                    player.showBossBar(progress);
+                                    storage.putTask(player, dictionary.highlightWords(ops.getBook(), book -> {
+                                        player.hideBossBar(progress);
+                                        storage.clearTask(player);
+                                        player.openBook(book);
+                                    }, prog -> progress.progress(prog)));
+                                }
+                            });
                         }
                         case SLOT_OPEN_PAGE -> {
                             server.getUIManager().openAnvilForResult(player, "Page number", "1", numStr -> {

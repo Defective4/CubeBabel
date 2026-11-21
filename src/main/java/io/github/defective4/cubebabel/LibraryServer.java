@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import io.github.defective4.cubebabel.book.BookManager;
@@ -100,7 +101,7 @@ public class LibraryServer {
         if (INSTANCE != null) throw new IllegalStateException("Only one library server instance is allowed at a time");
         INSTANCE = this;
         this.library = Objects.requireNonNull(library);
-        this.dictionary = Objects.requireNonNull(dictionary);
+        this.dictionary = dictionary;
         server = MinecraftServer.init();
         libraryInstance = initInstance("babel:library", new LibraryGenerator());
         hubInstance = initInstance("babel:hub", new HubGenerator(schematicManager.getHub()));
@@ -121,8 +122,8 @@ public class LibraryServer {
         return catalogue;
     }
 
-    public Dictionary getDictionary() {
-        return dictionary;
+    public Optional<Dictionary> getDictionary() {
+        return Optional.ofNullable(dictionary);
     }
 
     public HubCatalogue getHubCatalogue() {

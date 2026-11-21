@@ -14,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import io.github.defective4.cubebabel.LibraryServer;
+import io.github.defective4.cubebabel.book.Condition;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -75,6 +76,16 @@ public class HubCatalogue {
                     Component part;
                     if (lineElement instanceof JsonObject lineObj) {
                         part = Component.text(lineObj.get("text").getAsString()).decoration(BOLD, false);
+                        if (lineObj.has("condition")) {
+                            try {
+                                Condition condition = Condition
+                                        .valueOf(lineObj.get("condition").getAsString().toUpperCase());
+                                if (!condition.isTrue()) {
+                                    continue;
+                                }
+                            } catch (IllegalArgumentException e) {
+                            }
+                        }
                         if (lineObj.has("bold")) {
                             part = part.decorate(BOLD);
                         }

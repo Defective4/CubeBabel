@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,20 +39,13 @@ public class Dictionary {
     private final ExecutorService highlighterService = Executors.newFixedThreadPool(1);
     private final LegacyComponentSerializer serializer = LegacyComponentSerializer.legacySection();
 
-    public Dictionary(File file) throws IOException {
-        Map<String, String> defintions;
-        if (!file.exists()) {
-            defintions = Map.of();
-        } else {
-            try (Reader reader = new FileReader(file)) {
-                defintions = new HashMap<>();
-                for (Entry<String, JsonElement> entry : JsonParser.parseReader(reader).getAsJsonObject().entrySet()) {
-                    defintions.put(entry.getKey(), entry.getValue().getAsString());
-                }
-            }
-        }
-        definitions = Collections.unmodifiableMap(defintions);
-        delimiters = defintions.keySet().stream().sorted((a1, a2) -> a2.length() - a1.length()).toList();
+    private Dictionary(Map<String, String> definitions) throws IOException {
+        delimiters = definitions.keySet().stream().sorted((a1, a2) -> a2.length() - a1.length()).toList();
+        definitions = new HashMap<>(definitions);
+        List<String> emptyKeys = definitions.entrySet().stream().filter(e -> e.getValue() == null)
+                .map(Map.Entry::getKey).toList();
+        emptyKeys.forEach(definitions::remove);
+        this.definitions = Collections.unmodifiableMap(definitions);
     }
 
     public String getRandomWord(Random rand) {
@@ -93,6 +87,34 @@ public class Dictionary {
 
             scheduler.scheduleNextTick(() -> callback.accept(Book.book(book.title(), book.author(), formatted)));
         });
+    }
+
+    public static Dictionary fromDictionaryFile(File file) throws IOException {
+        Map<String, String> definitions;
+        if (!file.exists()) {
+            definitions = Map.of();
+        } else {
+            try (Reader reader = new FileReader(file)) {
+                definitions = new HashMap<>();
+                for (Entry<String, JsonElement> entry : JsonParser.parseReader(reader).getAsJsonObject().entrySet()) {
+                    definitions.put(entry.getKey(), entry.getValue().getAsString());
+                }
+            }
+        }
+        return new Dictionary(definitions);
+    }
+
+    public static Dictionary fromWordsListFile(File file) throws IOException {
+        Map<String, String> definitions;
+        if (!file.exists()) {
+            definitions = Map.of();
+        } else {
+            definitions = new HashMap<>();
+            for (String line : Files.readAllLines(file.toPath())) {
+                definitions.put(line, null);
+            }
+        }
+        return new Dictionary(definitions);
     }
 
     private static List<String> splitWithDelimiter(String text, Collection<String> delimiters) {

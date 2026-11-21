@@ -3,6 +3,7 @@ package io.github.defective4.cubebabel.command;
 import java.math.BigInteger;
 
 import io.github.defective4.cubebabel.LibraryServer;
+import io.github.defective4.cubebabel.ui.inventory.AnvilDialogInventory.RandomType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.command.CommandSender;
@@ -35,7 +36,7 @@ public class CenterCommand extends Command implements CommandExecutor {
             server.getPlayerStorage().setDimension(player, hex);
             LibraryServer.teleportPlayer(player, server.getLibraryInstance(),
                     LibraryServer.CENTER_ROOM_LOCATION.asPos());
-        });
+        }, RandomType.DIMENSION);
     }
 
 }

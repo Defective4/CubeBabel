@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import io.github.defective4.cubebabel.LibraryServer;
 import io.github.defective4.cubebabel.book.Dictionary;
 import io.github.defective4.cubebabel.generator.LibraryGenerator;
+import io.github.defective4.cubebabel.ui.inventory.AnvilDialogInventory.RandomType;
 import io.github.defective4.cubebabel.util.Tuple;
 import io.github.defective4.jbabel.BabelCatalogue;
 import io.github.defective4.jbabel.BabelLibrary;
@@ -158,7 +159,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
     }
 
     private void openAuthorSearch(Player player, Consumer<String> consumer) {
-        server.getUIManager().openAnvilForResult(player, "Search by author", "Author", consumer);
+        server.getUIManager().openAnvilForResult(player, "Search by author", "Author", consumer, RandomType.TITLE);
     }
 
     private void openContentSearch(Player player, Consumer<Tuple<String, Integer>> consumer) {
@@ -179,7 +180,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
     }
 
     private void openTitleSearch(Player player, Consumer<String> consumer) {
-        server.getUIManager().openAnvilForResult(player, "Search by book title", "Title", consumer);
+        server.getUIManager().openAnvilForResult(player, "Search by book title", "Title", consumer, RandomType.TITLE);
     }
 
     private Tuple<String, Integer> prepareContent(ContentMode mode, String content) {
@@ -234,7 +235,7 @@ public class FindBookCommand extends Command implements CommandExecutor {
         LibraryServer.teleportPlayer(player, server.getLibraryInstance(), pos);
     }
 
-    private static void fillBuilderWithRandomWords(Random random, Dictionary dictionary, StringBuilder builder) {
+    public static void fillBuilderWithRandomWords(Random random, Dictionary dictionary, StringBuilder builder) {
         while (true) {
             String word = dictionary.getRandomWord(random);
             if (builder.length() + word.length() > builder.capacity()) {

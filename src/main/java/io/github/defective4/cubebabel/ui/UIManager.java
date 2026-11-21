@@ -9,11 +9,15 @@ import java.util.function.Consumer;
 
 import io.github.defective4.cubebabel.LibraryServer;
 import io.github.defective4.cubebabel.storage.PlayerStorage;
+import io.github.defective4.cubebabel.ui.inventory.AnvilDialogInventory;
+import io.github.defective4.cubebabel.ui.inventory.AnvilDialogInventory.RandomType;
 import io.github.defective4.cubebabel.ui.inventory.OpenOptionsInventory;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.bossbar.BossBar.Color;
 import net.kyori.adventure.bossbar.BossBar.Overlay;
 import net.kyori.adventure.inventory.Book;
+import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.sound.Sound.Source;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -28,9 +32,11 @@ import net.minestom.server.event.player.PlayerAnvilInputEvent;
 import net.minestom.server.event.player.PlayerChatEvent;
 import net.minestom.server.event.player.PlayerDisconnectEvent;
 import net.minestom.server.inventory.AbstractInventory;
+import net.minestom.server.inventory.click.Click;
 import net.minestom.server.inventory.type.AnvilInventory;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
+import net.minestom.server.sound.SoundEvent;
 
 public class UIManager {
 
@@ -39,8 +45,10 @@ public class UIManager {
     private final Map<Player, Consumer<String>> anvilCallbacks = new HashMap<>();
     private final Map<Player, Consumer<String>> bookCallbacks = new HashMap<>();
     private final Map<Player, Consumer<String>> chatCallbacks = new HashMap<>();
+    private final LibraryServer server;
 
     public UIManager(LibraryServer server) {
+        this.server = server;
         GlobalEventHandler handler = MinecraftServer.getGlobalEventHandler();
         handler.addListener(PlayerAnvilInputEvent.class, e -> {
             if (e.getInventory() instanceof AnvilInventory anvil) {
@@ -57,15 +65,29 @@ public class UIManager {
         handler.addListener(InventoryPreClickEvent.class, e -> {
             Player player = e.getPlayer();
             AbstractInventory inventory = player.getOpenInventory();
-            if (inventory instanceof AnvilInventory anvil && anvilCallbacks.containsKey(player)) {
+            if (inventory instanceof AnvilDialogInventory anvil && anvilCallbacks.containsKey(player)) {
                 e.setCancelled(true);
-                if (e.getInventory() == anvil && e.getSlot() == 2) {
-                    ItemStack item = anvil.getItemStack(2);
-                    if (item != null && item.material() == Material.NAME_TAG) {
-                        Component name = item.get(DataComponents.CUSTOM_NAME);
-                        Consumer<String> callback = anvilCallbacks.get(player);
-                        player.closeInventory();
-                        callback.accept(name == null ? null : SERIALIZER.serialize(name));
+                if (e.getInventory() == anvil) {
+                    switch (e.getSlot()) {
+                        case 2 -> {
+                            ItemStack item = anvil.getItemStack(2);
+                            if (item != null && item.material() == Material.NAME_TAG) {
+                                Component name = item.get(DataComponents.CUSTOM_NAME);
+                                Consumer<String> callback = anvilCallbacks.get(player);
+                                player.closeInventory();
+                                callback.accept(name == null ? null : SERIALIZER.serialize(name));
+                            }
+                        }
+                        case 1 -> {
+                            if (e.getClick() instanceof Click.Left) {
+                                anvil.randomize();
+                            } else if (e.getClick() instanceof Click.Right) {
+                                anvil.switchRandomMode();
+                                player.playSound(Sound.sound(SoundEvent.BLOCK_LEVER_CLICK, Source.UI, 1f, 1f));
+                            }
+                        }
+                        default -> {
+                        }
                     }
                 }
             } else if (inventory instanceof OpenOptionsInventory ops) {
@@ -103,7 +125,7 @@ public class UIManager {
                                     return;
                                 }
                                 player.openBook(Book.book(book.title(), book.author(), List.of(pages.get(num - 1))));
-                            });
+                            }, RandomType.PAGE);
                         }
                         default -> {
                         }
@@ -147,11 +169,10 @@ public class UIManager {
         return false;
     }
 
-    public void openAnvilForResult(Player player, String prompt, String initial, Consumer<String> callback) {
+    public void openAnvilForResult(Player player, String prompt, String initial, Consumer<String> callback,
+            RandomType randomType) {
         anvilCallbacks.put(player, callback);
-        AnvilInventory anvil = new AnvilInventory(prompt);
-        anvil.setItemStack(0, ItemStack.of(Material.NAME_TAG).withCustomName(Component.text(initial)));
-        anvil.setRepairCost((short) 0);
+        AnvilInventory anvil = new AnvilDialogInventory(prompt, initial, randomType, server);
         player.openInventory(anvil);
     }
 

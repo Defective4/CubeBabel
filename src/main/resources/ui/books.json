@@ -28,7 +28,7 @@
                 },
                 "\n\n> ",
                 {
-                    "text": "[Partial (with random words)]",
+                    "text": "[With random words]",
                     "hover": "Find a book that contains the text along with random words from dictionary",
                     "command": "bookdialog WORDS"
                 }
@@ -67,12 +67,6 @@
                 },
                 "\n\n> ",
                 {
-                    "text": "[Random words]",
-                    "command": "find WORDS",
-                    "hover": "Find a book containing random dictionary words"
-                },
-                "\n\n> ",
-                {
                     "text": "[By title]",
                     "command": "find TITLE"
                 },
@@ -90,6 +84,12 @@
                 {
                     "text": "[All of the above]",
                     "command": "find ALL"
+                },
+                "\n\n> ",
+                {
+                    "text": "[Random words]",
+                    "command": "find WORDS",
+                    "hover": "Find a book containing random dictionary words"
                 }
             ]
         ]
